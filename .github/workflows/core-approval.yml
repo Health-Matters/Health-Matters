@@ -1,0 +1,83 @@
+name: Core Team Approval Check
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: read
+  organization: read
+
+jobs:
+  core-approval:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Verify core team approval
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // ---------------------------
+            // CONFIG
+            // ---------------------------
+            const TEAM_SLUG = 'core-approvers';
+            const ORG = context.repo.owner;
+
+            // ---------------------------
+            // PR NUMBER (GUARANTEED)
+            // ---------------------------
+            const prNumber = context.issue.number;
+            if (!prNumber) {
+              core.setFailed('❌ This workflow must run on a pull request');
+              return;
+            }
+
+            // ---------------------------
+            // LOAD PR DATA
+            // ---------------------------
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const author = pr.user.login;
+
+            // ---------------------------
+            // LOAD TEAM MEMBERS
+            // ---------------------------
+            const { data: teamMembers } = await github.rest.teams.listMembersInOrg({
+              org: ORG,
+              team_slug: TEAM_SLUG,
+            });
+
+            const approvers = teamMembers.map(m => m.login);
+
+            // ---------------------------
+            // LOAD REVIEWS
+            // ---------------------------
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_request_number: prNumber,
+            });
+
+            // ---------------------------
+            // CHECK APPROVAL
+            // ---------------------------
+            const approved = reviews.some(r =>
+              r.state === 'APPROVED' &&
+              approvers.includes(r.user.login) &&
+              r.user.login !== author
+            );
+
+            if (!approved) {
+              core.setFailed(
+                `❌ PR requires approval from @${ORG}/${TEAM_SLUG} (self-approval not allowed)`
+              );
+              return;
+            }
+
+            console.log('✅ Core team approval verified');
