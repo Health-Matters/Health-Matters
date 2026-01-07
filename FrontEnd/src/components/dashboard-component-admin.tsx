@@ -351,13 +351,13 @@ const ExampleContent = ({ isDark, setIsDark }: { isDark: boolean; setIsDark: (va
               </button>
             </div>
             <div className="space-y-4">
-              {[
-                { icon: DollarSign, title: "New sale recorded", desc: "Order #1234 completed", time: "2 min ago", color: "green" },
-                { icon: Users, title: "New user registered", desc: "john.doe@example.com joined", time: "5 min ago", color: "blue" },
-                { icon: Package, title: "Product updated", desc: "iPhone 15 Pro stock updated", time: "10 min ago", color: "purple" },
-                { icon: Activity, title: "System maintenance", desc: "Scheduled backup completed", time: "1 hour ago", color: "orange" },
-                { icon: Bell, title: "New notification", desc: "Marketing campaign results", time: "2 hours ago", color: "red" },
-              ].map((activity, i) => (
+              {([
+                { icon: DollarSign, title: "New sale recorded", desc: "Order #1234 completed", time: "2 min ago", color: "green" as const },
+                { icon: Users, title: "New user registered", desc: "john.doe@example.com joined", time: "5 min ago", color: "blue" as const },
+                { icon: Package, title: "Product updated", desc: "iPhone 15 Pro stock updated", time: "10 min ago", color: "purple" as const },
+                { icon: Activity, title: "System maintenance", desc: "Scheduled backup completed", time: "1 hour ago", color: "orange" as const },
+                { icon: Bell, title: "New notification", desc: "Marketing campaign results", time: "2 hours ago", color: "red" as const },
+              ] as const).map((activity, i) => (
                 <div key={i} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
                   <div className={`p-2 rounded-lg ${
                     activity.color === 'green' ? 'bg-green-50 dark:bg-green-900/20' :

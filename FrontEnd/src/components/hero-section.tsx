@@ -75,12 +75,12 @@ const AnimatedBoxes = () => {
     });
 
     const boxes = Array.from({ length: 50 }, (_, index) => ({
-        position: [(index - 25) * 0.75, 0, 0],
+        position: [(index - 25) * 0.75, 0, 0] as Vector3Tuple,
         rotation: [
             (index - 10) * 0.1,
             Math.PI / 2,
             0
-        ],
+        ] as Vector3Tuple,
         id: index
     }));
 
@@ -98,7 +98,7 @@ const AnimatedBoxes = () => {
 };
 
 export const Scene = () => {
-    const [cameraPosition, setCameraPosition] = React.useState([5, 5, 20]);
+    const [cameraPosition, setCameraPosition] = React.useState<Vector3Tuple>([5, 5, 20]);
 
     return (
         <div className="w-full h-full z-0">
