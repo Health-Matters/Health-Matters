@@ -3,7 +3,7 @@ name: Core Team Approval Check
 on:
   pull_request:
     branches: [main, dev]
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened, ready_for_review, submitted]
 
 permissions:
   contents: read
@@ -12,73 +12,50 @@ permissions:
 jobs:
   core-approval:
     runs-on: ubuntu-latest
-
     steps:
       - name: Verify core team approval
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          # REQUIRED: Use a PAT with 'read:org' scope. 
+          # Default GITHUB_TOKEN cannot see team members.
+          github-token: ${{ secrets.ORG_READ_TOKEN }}
           script: |
             const TEAM_SLUG = 'core-approvers';
             const ORG = context.repo.owner;
-            const OWNER = context.repo.owner;
-            const REPO = context.repo.repo;
-            const PR_NUMBER = context.issue.number;
+            const prAuthor = context.payload.pull_request.user.login;
 
-            if (!PR_NUMBER) {
-              core.setFailed('❌ Not running on a pull request');
-              return;
-            }
+            try {
+              // 1. Get all members of the core team (handles pagination)
+              const teamMembers = await github.paginate(github.rest.teams.listMembersInOrg, {
+                org: ORG,
+                team_slug: TEAM_SLUG,
+              });
+              
+              const coreLogins = teamMembers.map(m => m.login.toLowerCase());
+              console.log(`Core Team Members: ${coreLogins.join(', ')}`);
 
-            // Load PR
-            const { data: pr } = await github.rest.pulls.get({
-              owner: OWNER,
-              repo: REPO,
-              pull_number: PR_NUMBER,
-            });
+              // 2. Get all reviews for this PR
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+              });
 
-            const author = pr.user.login;
+              // 3. Check for a valid approval
+              // Logic: Must be 'APPROVED', must be in the team, and cannot be the PR author
+              const isApproved = reviews.some(review => {
+                const reviewer = review.user.login.toLowerCase();
+                return review.state === 'APPROVED' && 
+                       coreLogins.includes(reviewer) && 
+                       reviewer !== prAuthor.toLowerCase();
+              });
 
-            // Load reviews
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: OWNER,
-              repo: REPO,
-              pull_request_number: PR_NUMBER,
-            });
-
-            // Only valid approvals (no self-approval)
-            const approvals = reviews.filter(r =>
-              r.state === 'APPROVED' &&
-              r.user &&
-              r.user.login !== author
-            );
-
-            if (approvals.length === 0) {
-              core.setFailed(`❌ Approval required from @${ORG}/${TEAM_SLUG}`);
-              return;
-            }
-
-            // Check if ANY approving reviewer is in the team
-            for (const review of approvals) {
-              const reviewer = review.user.login;
-
-              try {
-                const { data: membership } =
-                  await github.rest.teams.getMembershipForUserInOrg({
-                    org: ORG,
-                    team_slug: TEAM_SLUG,
-                    username: reviewer,
-                  });
-
-                if (membership.state === 'active') {
-                  console.log(`✅ Approved by core team member: ${reviewer}`);
-                  return;
-                }
-              } catch {
-                // reviewer is not in the team → ignore
+              if (isApproved) {
+                console.log('✅ Approved by a core team member.');
+              } else {
+                core.setFailed(`❌ This PR requires approval from a member of the @${ORG}/${TEAM_SLUG} team (excluding the author).`);
               }
+            } catch (error) {
+              console.log(error);
+              core.setFailed(`Workflow failed: ${error.message}. Check if ORG_READ_TOKEN is valid and has 'read:org' scope.`);
             }
-
-            core.setFailed(
-              `❌ PR must be approved by a member of @${ORG}/${TEAM_SLUG} (self-approval not allowed)`
-            );
