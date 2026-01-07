@@ -1,6 +1,4 @@
 # .github/workflows/branch-protection.yml
-# This workflow enforces approval requirements for pull requests to main and dev branches
-
 name: Branch Protection & Approval Check
 
 on:
@@ -10,122 +8,147 @@ on:
       - dev
     types: [opened, synchronize, reopened, ready_for_review]
 
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+  organization: read
+
 jobs:
   check-approval:
     name: Check Team Approval
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ------------------------------
+      # Determine PR + Author safely
+      # ------------------------------
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr_number = context.issue.number;
+
+            if (!pr_number) {
+              core.setFailed('❌ Not running on a pull request');
+              return;
+            }
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr_number
+            });
+
+            core.setOutput('number', pr.number);
+            core.setOutput('author', pr.user.login);
+
+      # ------------------------------
+      # Check if author is approver
+      # ------------------------------
       - name: Check if PR author is in approval team
         id: check_team
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const team_slug = 'core-approvers'; // Your team name (lowercase, hyphenated)
+            const team_slug = 'core-approvers';
             const org = context.repo.owner;
-            const pr_author = context.payload.pull_request.user.login;
-            
+            const pr_author = '${{ steps.pr.outputs.author }}';
+
             try {
-              // Check if PR author is in the approval team
-              const { data: membership } = await github.rest.teams.getMembershipForUserInOrg({
-                org: org,
-                team_slug: team_slug,
+              const { data } = await github.rest.teams.getMembershipForUserInOrg({
+                org,
+                team_slug,
                 username: pr_author
               });
-              
-              if (membership.state === 'active') {
-                console.log(`✅ PR author ${pr_author} is in the approval team`);
-                core.setOutput('is_approver', 'true');
-              } else {
-                core.setOutput('is_approver', 'false');
-              }
-            } catch (error) {
-              console.log(`❌ PR author ${pr_author} is NOT in the approval team`);
+
+              core.setOutput('is_approver', data.state === 'active' ? 'true' : 'false');
+            } catch {
               core.setOutput('is_approver', 'false');
             }
 
+      # ------------------------------
+      # Check reviews
+      # ------------------------------
       - name: Check for team approval
-  id: check_reviews
-  uses: actions/github-script@v7
-  with:
-    github-token: ${{ secrets.GITHUB_TOKEN }}
-    script: |
-      const team_slug = 'core-approvers';
-      const org = context.repo.owner;
+        id: check_reviews
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const team_slug = 'core-approvers';
+            const org = context.repo.owner;
+            const pr_number = Number('${{ steps.pr.outputs.number }}');
+            const pr_author = '${{ steps.pr.outputs.author }}';
+            const is_author_approver = '${{ steps.check_team.outputs.is_approver }}' === 'true';
 
-      const pr_number =
-        context.issue?.number ||
-        context.payload.pull_request?.number;
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_request_number: pr_number
+            });
 
-      if (!pr_number) {
-        core.setFailed('❌ Unable to determine PR number');
-        return;
-      }
+            const { data: members } = await github.rest.teams.listMembersInOrg({
+              org,
+              team_slug
+            });
 
-      const is_pr_author_approver = '${{ steps.check_team.outputs.is_approver }}' === 'true';
+            const approvers = members.map(m => m.login);
 
-      // Get all reviews for this PR
-      const { data: reviews } = await github.rest.pulls.listReviews({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        pull_request_number: pr_number
-      });
+            const approved = reviews.some(r =>
+              r.state === 'APPROVED' &&
+              approvers.includes(r.user.login) &&
+              r.user.login !== pr_author
+            );
 
-      // Get team members
-      const { data: teamMembers } = await github.rest.teams.listMembersInOrg({
-        org,
-        team_slug
-      });
+            if (approved) {
+              core.setOutput('approved', 'true');
+              return;
+            }
 
-      const approverLogins = teamMembers.map(m => m.login);
+            core.setOutput('approved', 'false');
+            core.setOutput(
+              'message',
+              is_author_approver
+                ? 'PR author is a core approver but requires approval from another core team member'
+                : 'PR requires approval from the core approval team'
+            );
 
-      const approvedByTeam = reviews.some(review =>
-        review.state === 'APPROVED' &&
-        approverLogins.includes(review.user.login) &&
-        review.user.login !== context.payload.pull_request.user.login
-      );
-
-      if (approvedByTeam) {
-        core.setOutput('approved', 'true');
-      } else {
-        core.setOutput('approved', 'false');
-        core.setOutput(
-          'message',
-          is_pr_author_approver
-            ? 'PR author is a core approver but still requires approval from another team member'
-            : 'PR requires approval from the core approval team'
-        );
-      }
-
-
+      # ------------------------------
+      # Comment if needed
+      # ------------------------------
       - name: Add comment if approval needed
         if: steps.check_reviews.outputs.approved != 'true'
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
+            const pr_number = Number('${{ steps.pr.outputs.number }}');
             const message = '${{ steps.check_reviews.outputs.message }}';
-            
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: `## ⚠️ Approval Required\n\n${message}\n\n**Required:** At least 1 approval from @${context.repo.owner}/core-approvers\n\n---\n*This is an automated check to ensure proper code review.*`
+              issue_number: pr_number,
+              body: `## ⚠️ Approval Required\n\n${message}\n\n**Required:** At least 1 approval from @${context.repo.owner}/core-approvers\n\n---\n*Automated enforcement check*`
             });
 
+      # ------------------------------
+      # Fail or pass
+      # ------------------------------
       - name: Require approval
         if: steps.check_reviews.outputs.approved != 'true'
         run: |
-          echo "❌ This PR requires approval from the core approval team"
-          echo "Message: ${{ steps.check_reviews.outputs.message }}"
+          echo "❌ Approval required"
           exit 1
 
       - name: Approval check passed
         if: steps.check_reviews.outputs.approved == 'true'
         run: |
-          echo "✅ PR has been approved by a core team member"
-          echo "This PR can be merged!"
+          echo "✅ PR approved by core team"
