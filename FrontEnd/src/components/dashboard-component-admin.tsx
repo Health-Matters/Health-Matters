@@ -19,14 +19,10 @@ import {
   Settings,
   HelpCircle,
   User,
-  Menu,
-  X,
 } from "lucide-react";
 
 export const Admin = () => {
   const [isDark, setIsDark] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Controls width on desktop
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Controls visibility on mobile
 
   useEffect(() => {
     if (isDark) {
@@ -37,54 +33,26 @@ export const Admin = () => {
   }, [isDark]);
 
   return (
-    <div className={`flex h-screen w-full ${isDark ? 'dark' : ''}`}>
-      <div className="flex h-full w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        
-        {/* Mobile Overlay */}
-        {isMobileMenuOpen && (
-          <div 
-            className="fixed inset-0 z-40 bg-black/50 md:hidden backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-        )}
-
-        <Sidebar 
-          isSidebarOpen={isSidebarOpen} 
-          setIsSidebarOpen={setIsSidebarOpen}
-          isMobileMenuOpen={isMobileMenuOpen}
-          setIsMobileMenuOpen={setIsMobileMenuOpen}
-        />
-        
-        <ExampleContent 
-          isDark={isDark} 
-          setIsDark={setIsDark} 
-          onMenuClick={() => setIsMobileMenuOpen(true)}
-        />
+    <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
+      <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+        <Sidebar />
+        <ExampleContent isDark={isDark} setIsDark={setIsDark} />
       </div>
     </div>
   );
 };
 
-const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, isMobileMenuOpen, setIsMobileMenuOpen }) => {
+const Sidebar = () => {
+  const [open, setOpen] = useState(true);
   const [selected, setSelected] = useState("Dashboard");
-
-  // Determine width based on state and device
-  // Desktop: Controlled by isSidebarOpen (w-64 or w-16)
-  // Mobile: Always w-64 when open, but handled via transform
-  const desktopClasses = isSidebarOpen ? 'md:w-64' : 'md:w-16';
-  const mobileClasses = isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full';
 
   return (
     <nav
-      className={`
-        fixed inset-y-0 left-0 z-50 h-screen shrink-0 border-r bg-white shadow-sm transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900
-        ${desktopClasses} 
-        md:sticky md:top-0 md:translate-x-0 
-        ${mobileClasses}
-        w-64 p-2 
-      `}
+      className={`sticky top-0 h-screen shrink-0 border-r transition-all duration-300 ease-in-out ${
+        open ? 'w-64' : 'w-16'
+      } border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-2 shadow-sm`}
     >
-      <TitleSection open={isSidebarOpen} isMobile={false} />
+      <TitleSection open={open} />
 
       <div className="space-y-1 mb-8">
         <Option
@@ -92,14 +60,14 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, isMobileMenuOpen, setIsMobil
           title="Dashboard"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
         />
         <Option
           Icon={DollarSign}
           title="Sales"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
           notifs={3}
         />
         <Option
@@ -107,70 +75,62 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, isMobileMenuOpen, setIsMobil
           title="View Site"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
         />
         <Option
           Icon={ShoppingCart}
           title="Products"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
         />
         <Option
           Icon={Tag}
           title="Tags"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
         />
         <Option
           Icon={BarChart3}
           title="Analytics"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
         />
         <Option
           Icon={Users}
           title="Members"
           selected={selected}
           setSelected={setSelected}
-          open={isSidebarOpen}
+          open={open}
           notifs={12}
         />
       </div>
 
-      <div className={`border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1 ${!isSidebarOpen && 'hidden md:block'}`}>
-        {(isSidebarOpen || isMobileMenuOpen) && (
-             <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                Account
-             </div>
-        )}
-        <Option
-          Icon={Settings}
-          title="Settings"
-          selected={selected}
-          setSelected={setSelected}
-          open={isSidebarOpen}
-        />
-        <Option
-          Icon={HelpCircle}
-          title="Help & Support"
-          selected={selected}
-          setSelected={setSelected}
-          open={isSidebarOpen}
-        />
-      </div>
+      {open && (
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-1">
+          <div className="px-3 py-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            Account
+          </div>
+          <Option
+            Icon={Settings}
+            title="Settings"
+            selected={selected}
+            setSelected={setSelected}
+            open={open}
+          />
+          <Option
+            Icon={HelpCircle}
+            title="Help & Support"
+            selected={selected}
+            setSelected={setSelected}
+            open={open}
+          />
+        </div>
+      )}
 
-      <ToggleClose open={isSidebarOpen} setOpen={setIsSidebarOpen} />
-      
-      {/* Mobile Close Button (Top Right of Sidebar) */}
-      <button 
-        onClick={() => setIsMobileMenuOpen(false)}
-        className="absolute top-4 right-4 md:hidden text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-      >
-        <X className="h-6 w-6" />
-      </button>
+      <ToggleClose open={open} setOpen={setOpen} />
     </nav>
   );
 };
@@ -187,17 +147,19 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
           : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-200"
       }`}
     >
-      <div className="grid h-full w-12 shrink-0 place-content-center">
+      <div className="grid h-full w-12 place-content-center">
         <Icon className="h-4 w-4" />
       </div>
       
-      <span
-        className={`text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap ${
-          open ? 'w-auto opacity-100' : 'w-0 opacity-0 md:w-0'
-        }`}
-      >
-        {title}
-      </span>
+      {open && (
+        <span
+          className={`text-sm font-medium transition-opacity duration-200 ${
+            open ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {title}
+        </span>
+      )}
 
       {notifs && open && (
         <span className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 dark:bg-blue-600 text-xs text-white font-medium">
@@ -214,18 +176,20 @@ const TitleSection = ({ open }) => {
       <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
         <div className="flex items-center gap-3">
           <Logo />
-          <div className={`transition-all duration-200 overflow-hidden whitespace-nowrap ${open ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
-            <div className="flex items-center gap-2">
-              <div>
-                <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
-                  TomIsLoading
-                </span>
-                <span className="block text-xs text-gray-500 dark:text-gray-400">
-                  Pro Plan
-                </span>
+          {open && (
+            <div className={`transition-opacity duration-200 ${open ? 'opacity-100' : 'opacity-0'}`}>
+              <div className="flex items-center gap-2">
+                <div>
+                  <span className="block text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    TomIsLoading
+                  </span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    Pro Plan
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         {open && (
           <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
@@ -246,8 +210,12 @@ const Logo = () => {
         xmlns="http://www.w3.org/2000/svg"
         className="fill-white"
       >
-        <path d="M16.4992 2H37.5808L22.0816 24.9729H1L16.4992 2Z" />
-        <path d="M17.4224 27.102L11.4192 36H33.5008L49 13.0271H32.7024L23.2064 27.102H17.4224Z" />
+        <path
+          d="M16.4992 2H37.5808L22.0816 24.9729H1L16.4992 2Z"
+        />
+        <path
+          d="M17.4224 27.102L11.4192 36H33.5008L49 13.0271H32.7024L23.2064 27.102H17.4224Z"
+        />
       </svg>
     </div>
   );
@@ -257,7 +225,7 @@ const ToggleClose = ({ open, setOpen }) => {
   return (
     <button
       onClick={() => setOpen(!open)}
-      className="hidden md:block absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+      className="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
     >
       <div className="flex items-center p-3">
         <div className="grid size-10 place-content-center">
@@ -268,7 +236,11 @@ const ToggleClose = ({ open, setOpen }) => {
           />
         </div>
         {open && (
-          <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+          <span
+            className={`text-sm font-medium text-gray-600 dark:text-gray-300 transition-opacity duration-200 ${
+              open ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
             Hide
           </span>
         )}
@@ -277,25 +249,16 @@ const ToggleClose = ({ open, setOpen }) => {
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
+const ExampleContent = ({ isDark, setIsDark }) => {
   return (
-    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-4 md:p-6 overflow-y-auto overflow-x-hidden h-full">
+    <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-6 overflow-auto">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8 sticky top-0 z-10 bg-gray-50/90 dark:bg-gray-950/90 backdrop-blur-sm py-2">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onMenuClick}
-            className="md:hidden p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
-            <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 mt-1 hidden sm:block">Welcome back to your dashboard</p>
-          </div>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome back to your dashboard</p>
         </div>
-        
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-4">
           <button className="relative p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
             <Bell className="h-5 w-5" />
             <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full"></span>
@@ -310,42 +273,61 @@ const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
               <Moon className="h-4 w-4" />
             )}
           </button>
-          <button className="p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors hidden sm:block">
+          <button className="p-2 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
             <User className="h-5 w-5" />
           </button>
         </div>
       </div>
       
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <StatCard 
-          icon={DollarSign} 
-          title="Total Sales" 
-          value="$24,567" 
-          trend="+12% from last month" 
-          color="blue" 
-        />
-        <StatCard 
-          icon={Users} 
-          title="Active Users" 
-          value="1,234" 
-          trend="+5% from last week" 
-          color="green" 
-        />
-        <StatCard 
-          icon={ShoppingCart} 
-          title="Orders" 
-          value="456" 
-          trend="+8% from yesterday" 
-          color="purple" 
-        />
-        <StatCard 
-          icon={Package} 
-          title="Products" 
-          value="89" 
-          trend="+3 new this week" 
-          color="orange" 
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </div>
+          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Total Sales</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">$24,567</p>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-1">+12% from last month</p>
+        </div>
+        
+        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
+            </div>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </div>
+          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Active Users</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">1,234</p>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-1">+5% from last week</p>
+        </div>
+        
+        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+              <ShoppingCart className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+            </div>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </div>
+          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Orders</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">456</p>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-1">+8% from yesterday</p>
+        </div>
+
+        <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <Package className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            </div>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </div>
+          <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">Products</h3>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">89</p>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-1">+3 new this week</p>
+        </div>
       </div>
       
       {/* Content Grid */}
@@ -368,7 +350,7 @@ const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
                 { icon: Bell, title: "New notification", desc: "Marketing campaign results", time: "2 hours ago", color: "red" },
               ].map((activity, i) => (
                 <div key={i} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
-                  <div className={`p-2 shrink-0 rounded-lg ${
+                  <div className={`p-2 rounded-lg ${
                     activity.color === 'green' ? 'bg-green-50 dark:bg-green-900/20' :
                     activity.color === 'blue' ? 'bg-blue-50 dark:bg-blue-900/20' :
                     activity.color === 'purple' ? 'bg-purple-50 dark:bg-purple-900/20' :
@@ -391,7 +373,7 @@ const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
                       {activity.desc}
                     </p>
                   </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                  <div className="text-xs text-gray-400 dark:text-gray-500">
                     {activity.time}
                   </div>
                 </div>
@@ -400,14 +382,34 @@ const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
           </div>
         </div>
 
-        {/* Quick Stats Column */}
+        {/* Quick Stats */}
         <div className="space-y-6">
           <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quick Stats</h3>
             <div className="space-y-4">
-              <ProgressBar label="Conversion Rate" value="3.2%" percentage={32} color="bg-blue-500" />
-              <ProgressBar label="Bounce Rate" value="45%" percentage={45} color="bg-orange-500" />
-              <ProgressBar label="Page Views" value="8.7k" percentage={87} color="bg-green-500" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Conversion Rate</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">3.2%</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-blue-500 h-2 rounded-full" style={{ width: '32%' }}></div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Bounce Rate</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">45%</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-orange-500 h-2 rounded-full" style={{ width: '45%' }}></div>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Page Views</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">8.7k</span>
+              </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                <div className="bg-green-500 h-2 rounded-full" style={{ width: '87%' }}></div>
+              </div>
             </div>
           </div>
 
@@ -415,7 +417,7 @@ const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Top Products</h3>
             <div className="space-y-3">
               {['iPhone 15 Pro', 'MacBook Air M2', 'AirPods Pro', 'iPad Air'].map((product, i) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-gray-800 last:border-0">
+                <div key={i} className="flex items-center justify-between py-2">
                   <span className="text-sm text-gray-600 dark:text-gray-400">{product}</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     ${Math.floor(Math.random() * 1000 + 500)}
@@ -430,41 +432,4 @@ const ExampleContent = ({ isDark, setIsDark, onMenuClick }) => {
   );
 };
 
-// Extracted small components for cleaner code
-const StatCard = ({ icon: Icon, title, value, trend, color }) => {
-  const colors = {
-    blue: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20",
-    green: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20",
-    purple: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20",
-    orange: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20",
-  };
-
-  return (
-    <div className="p-6 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-2 rounded-lg ${colors[color]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-        <TrendingUp className="h-4 w-4 text-green-500" />
-      </div>
-      <h3 className="font-medium text-gray-600 dark:text-gray-400 mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
-      <p className="text-sm text-green-600 dark:text-green-400 mt-1">{trend}</p>
-    </div>
-  );
-};
-
-const ProgressBar = ({ label, value, percentage, color }) => (
-  <div>
-    <div className="flex justify-between items-center mb-1">
-      <span className="text-sm text-gray-600 dark:text-gray-400">{label}</span>
-      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{value}</span>
-    </div>
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-      <div className={`${color} h-2 rounded-full`} style={{ width: `${percentage}%` }}></div>
-    </div>
-  </div>
-);
-
 export default Admin;
-
