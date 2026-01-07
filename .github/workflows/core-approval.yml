@@ -14,57 +14,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Verify core team approval
+      - name: Require approval from core-approvers
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const TEAM_SLUG = 'core-approvers';
             const ORG = context.repo.owner;
+            const OWNER = context.repo.owner;
+            const REPO = context.repo.repo;
+            const PR_NUMBER = context.issue.number;
 
-            // PR number (guaranteed)
-            const prNumber = context.issue.number;
-            if (!prNumber) {
-              core.setFailed('❌ Not running on a pull request');
+            if (!PR_NUMBER) {
+              core.setFailed('❌ Not a pull request');
               return;
             }
 
-            // Load PR
+            // Get PR
             const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: prNumber,
+              owner: OWNER,
+              repo: REPO,
+              pull_number: PR_NUMBER,
             });
 
             const author = pr.user.login;
 
-            // Load team members
-            const { data: members } = await github.rest.teams.listMembersInOrg({
-              org: ORG,
-              team_slug: TEAM_SLUG,
-            });
-
-            const approvers = members.map(m => m.login);
-
-            // Load reviews
+            // Get reviews
             const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_request_number: prNumber,
+              owner: OWNER,
+              repo: REPO,
+              pull_request_number: PR_NUMBER,
             });
 
-            // Validate approval
-            const approved = reviews.some(r =>
+            const approvals = reviews.filter(r =>
               r.state === 'APPROVED' &&
-              approvers.includes(r.user.login) &&
+              r.user &&
               r.user.login !== author
             );
 
-            if (!approved) {
-              core.setFailed(
-                `❌ Approval required from @${ORG}/${TEAM_SLUG} (self-approval not allowed)`
-              );
+            if (approvals.length === 0) {
+              core.setFailed(`❌ Approval required from @${ORG}/${TEAM_SLUG}`);
               return;
             }
 
-            console.log('✅ Core team approval verified');
+            // Check if any approver is in the team
+            for (const review of approvals) {
+              const reviewer = review.user.login;
+
+              try {
+                const { data: membership } =
+                  await github.rest.teams.getMembershipForUserInOrg({
+                    org: ORG,
+                    team_slug: TEAM_SLUG,
+                    username: reviewer,
+                  });
+
+                if (membership.state === 'active') {
+                  console.log(`✅ Approved by core member: ${reviewer}`);
+                  return;
+                }
+              } catch (e) {
+                // Not in team → ignore
+              }
+            }
+
+            core.setFailed(
+              `❌ PR must be approved by a member of @${ORG}/${TEAM_SLUG} (self-approval not allowed)`
+            );
