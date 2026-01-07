@@ -1,8 +1,11 @@
 import React, { useRef } from 'react';
-import { Canvas, useFrame, useLoader } from '@react-three/fiber';
-import { TextureLoader, Shape, ExtrudeGeometry } from 'three';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Shape, ExtrudeGeometry } from 'three';
+import type { Vector3, Euler } from 'three';
 
-const Box = ({ position, rotation }) => {
+type Vector3Tuple = [number, number, number];
+
+const Box = ({ position, rotation }: { position: Vector3Tuple; rotation: Vector3Tuple }) => {
     const shape = new Shape();
     const angleStep = Math.PI * 0.5;
     const radius = 1;
@@ -63,7 +66,7 @@ const Box = ({ position, rotation }) => {
 };
 
 const AnimatedBoxes = () => {
-    const groupRef = useRef();
+    const groupRef = useRef<any>();
 
     useFrame((state, delta) => {
         if (groupRef.current) {
