@@ -9,6 +9,7 @@ import {
   FileText,
   ArrowRight
 } from "lucide-react";
+import { Link } from "react-router";
 
 const features = [
   {
@@ -66,7 +67,9 @@ export const Landing = () => {
             
             <div className="flex flex-col sm:flex-row gap-6 items-center pt-4">
               <Button className="h-14 px-10 text-lg rounded-2xl bg-cyan-500 text-white border-0 shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:bg-cyan-400 hover:scale-105 transition-all duration-300">
+                <Link to="/admin/dashboard">
                 Access Portal <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
               </Button>
               <Button variant="outline" className="h-14 px-10 text-lg rounded-2xl bg-white/5 text-white border-white/20 hover:bg-white/10 hover:border-white/40 transition-all backdrop-blur-sm">
                 View User Stories
