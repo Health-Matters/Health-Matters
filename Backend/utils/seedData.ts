@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import User from '../models/User';
-import Service from '../models/Service';
-import Referral from '../models/Referral';
-import Appointment from '../models/Appointment';
-import MedicalRecord from '../models/MedicalRecord';
-import Notification from '../models/Notification';
-import connectDB from '../config/db';
+import User from '../src/models/User';
+import Service from '../src/models/Service';
+import Referral from '../src/models/Referral';
+import Appointment from '../src/models/Appointment';
+import MedicalRecord from '../src/models/MedicalRecord';
+import Notification from '../src/models/Notification';
+import connectDB from '../src/config/db';
 
 // Load environment variables
 dotenv.config();
