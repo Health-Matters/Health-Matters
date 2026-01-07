@@ -3,7 +3,8 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from "react-router";
 import './index.css'
 import RootLayout from '@/layout/root-layout.jsx';
-import { LandingPage } from '@/pages/Landing-page/landing-page.jsx';
+import { LandingPage } from './pages/Landing-page/LandingPage';
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
