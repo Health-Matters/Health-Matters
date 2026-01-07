@@ -136,7 +136,7 @@ const Sidebar = () => {
 };
 
 interface OptionProps {
-  Icon: React.ElementType;
+  Icon: React.FC<{ className?: string }>;
   title: string;
   selected: string;
   setSelected: (value: string) => void;

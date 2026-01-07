@@ -66,7 +66,7 @@ const Box = ({ position, rotation }: { position: Vector3Tuple; rotation: Vector3
 };
 
 const AnimatedBoxes = () => {
-    const groupRef = useRef<any>();
+    const groupRef = useRef<any>(null);
 
     useFrame((state, delta) => {
         if (groupRef.current) {
