@@ -6,7 +6,7 @@ import RootLayout from '@/layout/root-layout.jsx';
 import { LandingPage } from './pages/Landing-page/LandingPage';
 // import AdminDashboard from './pages/DashBoards/AdminDashboard/admin-dashboard';
 import { Test } from './pages/DashBoards/AdminDashboard/test';
-import AdminDashboard, { AdminDashboardPage } from './pages/DashBoards/AdminDashboard/admin-dashboard';
+import HealthMattersDashboard from './pages/DashBoards/AdminDashboard/admin-dashboard';
 
 
 
@@ -16,7 +16,7 @@ createRoot(document.getElementById('root')).render(
       <Routes>
         <Route element={<RootLayout />}>
           <Route path='/' element={<LandingPage />} />
-          <Route path='/admin/dashboard' element={ <AdminDashboardPage />} />
+          <Route path='/admin/dashboard' element={ <HealthMattersDashboard /> } />
         </Route>
       </Routes>
     </BrowserRouter>
