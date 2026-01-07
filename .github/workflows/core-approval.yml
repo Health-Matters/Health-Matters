@@ -6,8 +6,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
+  contents: read
   pull-requests: read
-  organization: read
 
 jobs:
   core-approval:
@@ -19,24 +19,17 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // ---------------------------
-            // CONFIG
-            // ---------------------------
             const TEAM_SLUG = 'core-approvers';
             const ORG = context.repo.owner;
 
-            // ---------------------------
-            // PR NUMBER (GUARANTEED)
-            // ---------------------------
+            // PR number (guaranteed)
             const prNumber = context.issue.number;
             if (!prNumber) {
-              core.setFailed('❌ This workflow must run on a pull request');
+              core.setFailed('❌ Not running on a pull request');
               return;
             }
 
-            // ---------------------------
-            // LOAD PR DATA
-            // ---------------------------
+            // Load PR
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -45,28 +38,22 @@ jobs:
 
             const author = pr.user.login;
 
-            // ---------------------------
-            // LOAD TEAM MEMBERS
-            // ---------------------------
-            const { data: teamMembers } = await github.rest.teams.listMembersInOrg({
+            // Load team members
+            const { data: members } = await github.rest.teams.listMembersInOrg({
               org: ORG,
               team_slug: TEAM_SLUG,
             });
 
-            const approvers = teamMembers.map(m => m.login);
+            const approvers = members.map(m => m.login);
 
-            // ---------------------------
-            // LOAD REVIEWS
-            // ---------------------------
+            // Load reviews
             const { data: reviews } = await github.rest.pulls.listReviews({
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_request_number: prNumber,
             });
 
-            // ---------------------------
-            // CHECK APPROVAL
-            // ---------------------------
+            // Validate approval
             const approved = reviews.some(r =>
               r.state === 'APPROVED' &&
               approvers.includes(r.user.login) &&
@@ -75,7 +62,7 @@ jobs:
 
             if (!approved) {
               core.setFailed(
-                `❌ PR requires approval from @${ORG}/${TEAM_SLUG} (self-approval not allowed)`
+                `❌ Approval required from @${ORG}/${TEAM_SLUG} (self-approval not allowed)`
               );
               return;
             }
