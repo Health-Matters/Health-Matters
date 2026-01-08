@@ -136,10 +136,10 @@ const Sidebar = () => {
 };
 
 const Option = ({ Icon, title, selected, setSelected, open, notifs }: {
-  Icon: React.ElementType;
+  Icon: React.ComponentType<{ className?: string }>;
   title: string;
   selected: string;
-  setSelected: (value: string) => void;
+  setSelected: React.Dispatch<React.SetStateAction<string>>;
   open: boolean;
   notifs?: number;
 }) => {
@@ -228,7 +228,7 @@ const Logo = () => {
   );
 };
 
-const ToggleClose = ({ open, setOpen }: { open: boolean; setOpen: (value: boolean) => void }) => {
+const ToggleClose = ({ open, setOpen }: { open: boolean; setOpen: React.Dispatch<React.SetStateAction<boolean>> }) => {
   return (
     <button
       onClick={() => setOpen(!open)}
@@ -256,7 +256,7 @@ const ToggleClose = ({ open, setOpen }: { open: boolean; setOpen: (value: boolea
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark }: { isDark: boolean; setIsDark: (value: boolean) => void }) => {
+const ExampleContent = ({ isDark, setIsDark }: { isDark: boolean; setIsDark: React.Dispatch<React.SetStateAction<boolean>> }) => {
   return (
     <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-6 overflow-auto">
       {/* Header */}
