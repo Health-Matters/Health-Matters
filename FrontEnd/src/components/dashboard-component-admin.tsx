@@ -135,7 +135,14 @@ const Sidebar = () => {
   );
 };
 
-const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
+const Option = ({ Icon, title, selected, setSelected, open, notifs }: {
+  Icon: React.ElementType;
+  title: string;
+  selected: string;
+  setSelected: (value: string) => void;
+  open: boolean;
+  notifs?: number;
+}) => {
   const isSelected = selected === title;
   
   return (
@@ -170,7 +177,7 @@ const Option = ({ Icon, title, selected, setSelected, open, notifs }) => {
   );
 };
 
-const TitleSection = ({ open }) => {
+const TitleSection = ({ open }: { open: boolean }) => {
   return (
     <div className="mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
       <div className="flex cursor-pointer items-center justify-between rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-gray-800">
@@ -221,7 +228,7 @@ const Logo = () => {
   );
 };
 
-const ToggleClose = ({ open, setOpen }) => {
+const ToggleClose = ({ open, setOpen }: { open: boolean; setOpen: (value: boolean) => void }) => {
   return (
     <button
       onClick={() => setOpen(!open)}
@@ -249,7 +256,7 @@ const ToggleClose = ({ open, setOpen }) => {
   );
 };
 
-const ExampleContent = ({ isDark, setIsDark }) => {
+const ExampleContent = ({ isDark, setIsDark }: { isDark: boolean; setIsDark: (value: boolean) => void }) => {
   return (
     <div className="flex-1 bg-gray-50 dark:bg-gray-950 p-6 overflow-auto">
       {/* Header */}

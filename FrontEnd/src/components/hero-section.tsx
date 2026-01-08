@@ -1,8 +1,9 @@
 import React, { useRef } from 'react';
 import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { TextureLoader, Shape, ExtrudeGeometry } from 'three';
+import type * as THREE from 'three';
 
-const Box = ({ position, rotation }) => {
+const Box = ({ position, rotation }: { position: [number, number, number]; rotation: [number, number, number] }) => {
     const shape = new Shape();
     const angleStep = Math.PI * 0.5;
     const radius = 1;
@@ -63,7 +64,7 @@ const Box = ({ position, rotation }) => {
 };
 
 const AnimatedBoxes = () => {
-    const groupRef = useRef();
+    const groupRef = useRef<THREE.Group>(null);
 
     useFrame((state, delta) => {
         if (groupRef.current) {

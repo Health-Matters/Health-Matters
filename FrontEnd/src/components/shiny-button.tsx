@@ -9,7 +9,7 @@ interface ShinyButtonProps {
 export function ShinyButton({ children, onClick, className = "" }: ShinyButtonProps) {
   return (
     <>
-      <style jsx>{`
+      <style>{`
         @import url("https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,500&display=swap");
 
         @property --gradient-angle {
