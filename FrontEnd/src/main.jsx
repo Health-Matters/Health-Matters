@@ -10,6 +10,7 @@ import HealthMattersDashboard from './pages/DashBoards/AdminDashboard/admin-dash
 import { ClerkProvider } from '@clerk/clerk-react';
 import SignInPage from './pages/Login/sign-in.jsx';
 import SignUpPage from './pages/Login/sign-up.jsx';
+import  MainLayout  from './layout/main-layout.jsx';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -25,7 +26,9 @@ createRoot(document.getElementById('root')).render(
         <Route element={<RootLayout />}>
               <Route path="/sign-in" element={<SignInPage />} />
               <Route path="/sign-up" element={<SignUpPage />} />
+          <Route element={<MainLayout />}>
           <Route path='/' element={<LandingPage />} />
+          </Route>
           <Route path='/admin/dashboard' element={ <HealthMattersDashboard /> } />
         </Route>
       </Routes>
