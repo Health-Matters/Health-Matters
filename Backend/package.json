@@ -3,17 +3,18 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- "scripts": {
+  "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "npm install && tsc",
+    "dev:ngrok": "ngrok start Health-Matters-Backend --config=ngrok.yml",
     "start": "node ./dist/index.js",
-    "seed": "ts-node utils/seedData.ts"
+    "seed": "ts-node src/models/seed/seedDb.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@clerk/backend": "^2.29.0",
-    "@clerk/express": "^1.7.60",
+    "@clerk/express": "^1.7.61",
     "axios": "^1.13.2",
     "bcrypt": "^5.1.1",
     "cors": "^2.8.5",
@@ -22,6 +23,7 @@
     "express": "^5.2.1",
     "mongodb": "^7.0.0",
     "mongoose": "^9.1.2",
+    "ngrok": "^5.0.0-beta.2",
     "node-cron": "^4.2.1",
     "uuid": "^13.0.0",
     "zod": "^4.3.5"

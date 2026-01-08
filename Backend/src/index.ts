@@ -1,51 +1,30 @@
 import express from 'express';
 import dotenv from "dotenv";
-import connectDB from '../config/db';
-import userRoutes from '../routes/userRoutes';
-import seedDatabase from '../utils/seedData';
-import User from '../models/User';
-
+import connectDB from './config/db';
+import userRoutes from './routes/userRoutes';
+import { loggerMiddleware } from './middlewares/logger-middleware';
+import { clerkMiddleware } from '@clerk/express';
+import webHooksRouter from './middlewares/webhooks/webhooks';
 // Load env vars before using them
 dotenv.config(); 
 
 const server = express();
-
+// Webhooks
+server.use("/api/webhooks", webHooksRouter);
 // Middleware
+server.use(clerkMiddleware())
 server.use(express.json());
-
+server.use(loggerMiddleware);
 // Routes
-server.get('/', (req, res) => {
-  res.json({ message: 'Health Matters API is running!' });
-});
-
 server.use('/api/users', userRoutes);
-
-// Connect to Database, Seed if Empty, then Start Server
-const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await connectDB();
-    
-    // Check if database is empty and seed if needed
-    const userCount = await User.countDocuments();
-    if (userCount === 0) {
-      console.log('📦 Database is empty. Seeding data...');
-      await seedDatabase();
-      console.log('✅ Database seeded successfully!');
-    } else {
-      console.log(`✅ Database already has ${userCount} users`);
-    }
-    
-    // Start Server
+// Connect to Database
+connectDB();
+// Start Server
     const Port = process.env.PORT || 3000;
     server.listen(Port, () => {
       console.log(`🚀 Server is running on port ${Port}`);
-      console.log(`📡 API: http://localhost:${Port}/api/users`);
+      console.log(`📡 API: http://localhost:${Port}`);
     });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
-};
 
-startServer();
+console.log("Hello world");
+
