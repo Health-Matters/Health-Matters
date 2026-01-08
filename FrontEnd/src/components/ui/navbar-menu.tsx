@@ -5,7 +5,7 @@ import { Link } from "react-router";
 
 
 const transition = {
-  type: "spring",
+  type: "spring" as const,
   mass: 0.5,
   damping: 11.5,
   stiffness: 100,
@@ -89,7 +89,7 @@ export const ProductItem = ({
   src: string;
 }) => {
   return (
-    <Link href={href} className="flex space-x-2">
+    <Link to={href} className="flex space-x-2">
       <img
         src={src}
         width={140}

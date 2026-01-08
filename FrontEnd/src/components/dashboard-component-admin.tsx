@@ -35,14 +35,14 @@ export const Admin = () => {
   return (
     <div className={`flex min-h-screen w-full ${isDark ? 'dark' : ''}`}>
       <div className="flex w-full bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
-        <Sidebar />
+        <Sidebar isDark={isDark} />
         <ExampleContent isDark={isDark} setIsDark={setIsDark} />
       </div>
     </div>
   );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ isDark }: { isDark: boolean }) => {
   const [open, setOpen] = useState(true);
   const [selected, setSelected] = useState("Dashboard");
 
