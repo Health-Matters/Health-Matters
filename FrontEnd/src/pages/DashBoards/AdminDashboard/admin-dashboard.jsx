@@ -13,7 +13,8 @@ import {
   Clock,
   TrendingUp,
   PieChart,
-  ArrowRight
+  ArrowRight,
+  CalendarDays
 } from "lucide-react";
 import {
   Sidebar,
@@ -29,12 +30,15 @@ import {
   SidebarTrigger,
   SidebarHeader,
 } from "@/components/ui/sidebar";
+import AdminDiaryDashboard from "./admin-diary-dashboard";
+import TestDiary from "./test-diary";
 
 // Updated Menu Items with URLs
 const items = [
   { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Referrals", url: "/referrals", icon: Inbox },
   { title: "Appointments", url: "/appointments", icon: Calendar },
+  { title: "Diary Management", url: "/diary", icon: CalendarDays },
   { title: "Patients", url: "/patients", icon: Users },
   { title: "Clinical Reports", url: "/reports", icon: FileText },
   { title: "Anomalies", url: "/anomalies", icon: TriangleAlert }, // We will style this one differently
@@ -81,12 +85,14 @@ const HealthMattersDashboard = () => {
                     return (
                       <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton 
-                          asChild 
                           tooltip={item.title}
                           isActive={isActive}
-                          onClick={() => setActiveUrl(item.url)} 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setActiveUrl(item.url);
+                          }}
                           className={`
-                            h-10 px-4 rounded-xl transition-all duration-300 group mb-1 border
+                            h-10 px-4 rounded-xl transition-all duration-300 group mb-1 border cursor-pointer
                             ${isActive 
                                ? "bg-cyan-500/10 text-cyan-400 border-cyan-500/20" 
                                : "text-slate-400 border-transparent hover:bg-white/5 hover:text-white"
@@ -94,7 +100,7 @@ const HealthMattersDashboard = () => {
                             ${!isActive && isAnomaly ? "hover:text-rose-400 hover:bg-rose-500/5" : ""}
                           `}
                         >
-                          <a href={item.url} className="flex justify-between items-center w-full">
+                          <div className="flex justify-between items-center w-full">
                             <div className="flex items-center gap-3">
                               <item.icon className={`h-4 w-4 transition-colors 
                                 ${isActive ? "text-cyan-400" : isAnomaly ? "text-rose-400/70 group-hover:text-rose-400" : "text-slate-500 group-hover:text-white"}
@@ -102,7 +108,7 @@ const HealthMattersDashboard = () => {
                               <span className="font-medium">{item.title}</span>
                             </div>
                             {isActive && <div className="h-1.5 w-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]"></div>}
-                          </a>
+                          </div>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
                     );
@@ -162,6 +168,11 @@ const HealthMattersDashboard = () => {
           </header>
 
           <div className="flex-1 overflow-auto p-4 md:p-8 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            {activeUrl === "/diary" ? (
+              <div className="max-w-7xl mx-auto">
+                <AdminDiaryDashboard />
+              </div>
+            ) : (
             <div className="max-w-7xl mx-auto space-y-8">
                
                {/* Welcome Banner */}
@@ -273,6 +284,7 @@ const HealthMattersDashboard = () => {
                    </div>
                </div>
             </div>
+            )}
           </div>
         </main>
       </div>
