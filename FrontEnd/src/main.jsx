@@ -36,6 +36,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import SignInPage from './pages/Login/sign-in.jsx';
 import SignUpPage from './pages/Login/sign-up.jsx';
 import  MainLayout  from './layout/main-layout.jsx';
+import { ProtectedLayout } from './layout/ProtectedLayout.jsx';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -54,6 +55,7 @@ createRoot(document.getElementById('root')).render(
           <Route element={<MainLayout />}>
           <Route path='/' element={<LandingPage />} />
           </Route>
+          <Route path='/dashboard' element={<ProtectedLayout />} />
           // Admin Dashboard Routes
           <Route path='/admin/dashboard' element={ <AdminDashboardLayout /> }>
             <Route index element={ <TestOverview /> } />
