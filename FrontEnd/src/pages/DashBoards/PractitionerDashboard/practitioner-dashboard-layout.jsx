@@ -2,10 +2,10 @@ import React from "react";
 import { Outlet, useLocation } from "react-router";
 import {
   Home,
-  TriangleAlert,
-  BookOpen,
-  Users,
-  Settings,
+  Stethoscope,
+  ClipboardCheck,
+  CalendarCheck,
+  User,
   ChevronsUpDown,
 } from "lucide-react";
 import {
@@ -27,50 +27,46 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 const items = [
   {
     title: "Overview",
-    url: "/admin/dashboard",
+    url: "/practitioner/dashboard",
     icon: Home,
   },
   {
-    title: "Referrals",
-    url: "/admin/dashboard/referrals",
-    icon: TriangleAlert,
+    title: "Patients",
+    url: "/practitioner/dashboard/patients",
+    icon: Stethoscope,
   },
   {
-    title: "Diary",
-    url: "/admin/dashboard/diary",
-    icon: BookOpen,
+    title: "Reviews",
+    url: "/practitioner/dashboard/reviews",
+    icon: ClipboardCheck,
   },
   {
-    title: "Users",
-    url: "/admin/dashboard/users",
-    icon: Users,
+    title: "Appointments",
+    url: "/practitioner/dashboard/appointments",
+    icon: CalendarCheck,
   },
   {
-    title: "Settings",
-    url: "/admin/dashboard/settings",
-    icon: Settings,
+    title: "Profile",
+    url: "/practitioner/dashboard/profile",
+    icon: User,
   },
 ];
 
-const AdminDashboardLayout = () => {
+const PractitionerDashboardLayout = () => {
   const { user } = useUser();
   const location = useLocation();
 
   return (
     <TooltipProvider>
       <SidebarProvider>
-        <div className="flex min-h-screen w-full bg-slate-50">
-          {/* SIDEBAR: Blue Theme Applied Here */}
-          <Sidebar className="border-r border-blue-800 bg-blue-900 text-white">
-            
-            {/* Header */}
-            <SidebarHeader className="flex h-16 items-center border-b border-blue-800 px-6">
+        <div className="flex min-h-screen w-full bg-amber-50">
+          <Sidebar className="border-r border-amber-800 bg-amber-900 text-white">
+            <SidebarHeader className="flex h-16 items-center border-b border-amber-800 px-6">
               <span className="text-lg font-bold tracking-wide text-white">
-                Admin Panel
+                Practitioner Panel
               </span>
             </SidebarHeader>
 
-            {/* Content / Menu */}
             <SidebarContent className="px-3 py-4">
               <SidebarGroup>
                 <SidebarGroupContent>
@@ -87,8 +83,8 @@ const AdminDashboardLayout = () => {
                               mb-1 h-10 w-full rounded-md px-3 transition-colors
                               ${
                                 isActive
-                                  ? "bg-blue-700 text-white" // Active State
-                                  : "text-blue-100 hover:bg-blue-800 hover:text-white" // Inactive State
+                                  ? "bg-amber-700 text-white"
+                                  : "text-amber-100 hover:bg-amber-800 hover:text-white"
                               }
                             `}
                           >
@@ -105,35 +101,30 @@ const AdminDashboardLayout = () => {
               </SidebarGroup>
             </SidebarContent>
 
-            {/* Footer */}
-            <SidebarFooter className="border-t border-blue-800 p-4">
-              <div className="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-blue-800">
+            <SidebarFooter className="border-t border-amber-800 p-4">
+              <div className="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-amber-800">
                 <div className="flex items-center gap-3">
-                  <UserButton 
+                  <UserButton
                     appearance={{
-                      elements: { userButtonAvatarBox: "h-8 w-8" }
+                      elements: { userButtonAvatarBox: "h-8 w-8" },
                     }}
                   />
                   <div className="flex flex-col text-sm text-white">
                     <span className="font-medium">
                       {user?.firstName || "User"}
                     </span>
-                    <span className="text-xs text-blue-200">
-                      Admin
-                    </span>
+                    <span className="text-xs text-amber-200">Practitioner</span>
                   </div>
                 </div>
-                <ChevronsUpDown className="h-4 w-4 text-blue-200" />
+                <ChevronsUpDown className="h-4 w-4 text-amber-200" />
               </div>
             </SidebarFooter>
           </Sidebar>
 
-          {/* MAIN CONTENT */}
           <main className="flex flex-1 flex-col overflow-hidden">
-            {/* Top Navbar */}
-            <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
+            <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-amber-200 bg-white px-6 shadow-sm">
               <div className="flex items-center gap-4">
-                <SidebarTrigger className="text-blue-900 hover:bg-blue-50 hover:text-blue-700" />
+                <SidebarTrigger className="text-amber-900 hover:bg-amber-50 hover:text-amber-700" />
                 <h2 className="text-lg font-semibold text-slate-800">
                   Dashboard
                 </h2>
@@ -144,7 +135,6 @@ const AdminDashboardLayout = () => {
               </div>
             </header>
 
-            {/* Page Content Outlet */}
             <div className="flex-1 overflow-auto p-6">
               <Outlet />
             </div>
@@ -155,4 +145,4 @@ const AdminDashboardLayout = () => {
   );
 };
 
-export default AdminDashboardLayout;
+export default PractitionerDashboardLayout;
