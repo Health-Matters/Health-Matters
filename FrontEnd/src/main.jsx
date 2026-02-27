@@ -9,6 +9,7 @@ import AdminDashboardLayout from './pages/DashBoards/AdminDashboard/admin-dashbo
 import { TestFeature } from './pages/DashBoards/AdminDashboard/test.jsx';
 import { TestOverview } from './pages/DashBoards/AdminDashboard/test-overview.jsx';
 import { TestAnalytics } from './pages/DashBoards/AdminDashboard/test-analytics.jsx';
+import { TestServices } from './pages/DashBoards/AdminDashboard/test-services.jsx';
 import TestDiary from './pages/DashBoards/AdminDashboard/test-diary.jsx';
 import { TestUsers } from './pages/DashBoards/AdminDashboard/test-users.jsx';
 import { TestSettings } from './pages/DashBoards/AdminDashboard/test-settings.jsx';
@@ -61,6 +62,7 @@ createRoot(document.getElementById('root')).render(
           <Route path='/admin/dashboard' element={ <AdminDashboardLayout /> }>
             <Route index element={ <TestOverview /> } />
             <Route path='analytics' element={ <TestAnalytics /> } />
+            <Route path='services' element={ <TestServices /> } />
             <Route path='referrals' element={ <TestFeature /> } />
             <Route path='diary' element={ <TestDiary /> } />
             <Route path='users' element={ <TestUsers /> } />

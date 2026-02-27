@@ -8,6 +8,7 @@ import {
   Settings,
   ChevronsUpDown,
   BarChart3,
+  Package,
 } from "lucide-react";
 import {
   Sidebar,
@@ -35,6 +36,11 @@ const items = [
     title: "Analytics & KPI",
     url: "/admin/dashboard/analytics",
     icon: BarChart3,
+  },
+  {
+    title: "Service Management",
+    url: "/admin/dashboard/services",
+    icon: Package,
   },
   {
     title: "Referrals",
