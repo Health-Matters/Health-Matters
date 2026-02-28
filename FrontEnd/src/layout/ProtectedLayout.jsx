@@ -1,6 +1,5 @@
-//Implement Authorization Layout 
 import { useUser } from "@clerk/clerk-react";
-import { Navigate, Outlet } from "react-router";
+import { Navigate } from "react-router"; // Removed Outlet if not used, or keep if needed
 import { useEffect } from "react";
 
 const roleToPath = {
@@ -11,8 +10,21 @@ const roleToPath = {
 };
 
 export const ProtectedLayout = () => {
+    // 1. Always call Hooks at the top level
     const { isSignedIn, isLoaded, user } = useUser();
 
+    // 2. Define variables immediately (safe to do even if loading)
+    const role = user?.publicMetadata?.role;
+    const targetPath = role && roleToPath[role]; // Safe check
+
+    // 3. Call useEffect BEFORE any return statements
+    useEffect(() => {
+        if (isLoaded && isSignedIn) {
+            console.log("Authenticated role:", role);
+        }
+    }, [isLoaded, isSignedIn, role]);
+
+    // 4. NOW you can handle your conditional returns
     if (!isLoaded) {
         return null;
     }
@@ -21,20 +33,12 @@ export const ProtectedLayout = () => {
         return <Navigate to="/sign-in" replace />;
     }
 
-    const role = user?.publicMetadata?.role;
-    const targetPath = roleToPath[role];
-
-    useEffect(() => {
-        if (isSignedIn) {
-            console.log("Authenticated role:", role);
-        }
-    }, [isSignedIn, role]);
-
-    
+    // If the user has a valid role, redirect them immediately
     if (targetPath) {
         return <Navigate to={targetPath} replace />;
     }
 
+    // If signed in but no role assigned yet
     return (
         <div className="min-h-screen w-full bg-slate-50">
             <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
