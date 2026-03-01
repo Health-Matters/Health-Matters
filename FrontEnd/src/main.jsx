@@ -8,6 +8,8 @@ import { LandingPage } from './pages/Landing-page/LandingPage';
 import AdminDashboardLayout from './pages/DashBoards/AdminDashboard/admin-dashboard-layout.jsx';
 import { TestFeature } from './pages/DashBoards/AdminDashboard/test.jsx';
 import { TestOverview } from './pages/DashBoards/AdminDashboard/test-overview.jsx';
+import { TestAnalytics } from './pages/DashBoards/AdminDashboard/test-analytics.jsx';
+import { TestServices } from './pages/DashBoards/AdminDashboard/test-services.jsx';
 import TestDiary from './pages/DashBoards/AdminDashboard/test-diary.jsx';
 import { TestUsers } from './pages/DashBoards/AdminDashboard/test-users.jsx';
 import { TestSettings } from './pages/DashBoards/AdminDashboard/test-settings.jsx';
@@ -55,10 +57,12 @@ createRoot(document.getElementById('root')).render(
           <Route element={<MainLayout />}>
           <Route path='/' element={<LandingPage />} />
           </Route>
-          <Route path='/dashboard' element={<ProtectedLayout />} />
+          <Route element={<ProtectedLayout />}>
           // Admin Dashboard Routes
           <Route path='/admin/dashboard' element={ <AdminDashboardLayout /> }>
             <Route index element={ <TestOverview /> } />
+            <Route path='analytics' element={ <TestAnalytics /> } />
+            <Route path='services' element={ <TestServices /> } />
             <Route path='referrals' element={ <TestFeature /> } />
             <Route path='diary' element={ <TestDiary /> } />
             <Route path='users' element={ <TestUsers /> } />
@@ -87,6 +91,7 @@ createRoot(document.getElementById('root')).render(
             <Route path='insights' element={ <ManagerTestInsights /> } />
             <Route path='budget' element={ <ManagerTestBudget /> } />
             <Route path='profile' element={ <ManagerTestProfile /> } />
+          </Route>
           </Route>
         </Route>
       </Routes>
