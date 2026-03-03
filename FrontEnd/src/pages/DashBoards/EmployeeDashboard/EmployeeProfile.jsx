@@ -5,7 +5,6 @@ import { useNavigate } from "react-router";
 export const EmployeeProfile = () => {
   const navigate = useNavigate(); 
 
-  // Replace this with your actual Google Profile URL from your Auth State
   const userProfileImageUrl = "https://lh3.googleusercontent.com/a/your-google-profile-id";
 
   return (
@@ -17,7 +16,7 @@ export const EmployeeProfile = () => {
         <h1 className="text-3xl font-bold text-slate-900">My Profile</h1>
         <div className="flex gap-6 items-center">
           <button 
-            onClick={() => navigate("/employee/dashboard/settings")}
+            onClick={() => navigate("/employee/dashboard/accessibility")}
             className="text-gray-400 hover:text-gray-600 transition-colors"
           >
             <Settings size={24} strokeWidth={1.5} />
