@@ -57,7 +57,6 @@ const items = [
     url: "/employee/dashboard/settings",
     icon: Settings,
   },
-  // logout removed per request
 ];
 
 const EmployeeDashboardLayout = () => {
