@@ -60,8 +60,8 @@ const PractitionerDashboardLayout = () => {
     <TooltipProvider>
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-amber-50">
-          <Sidebar className="border-r border-amber-800 bg-amber-900 text-white">
-            <SidebarHeader className="flex h-16 items-center border-b border-amber-800 px-6">
+          <Sidebar className="border-r border-blue-800 bg-blue-800 text-white">
+            <SidebarHeader className="flex h-16 items-center border-b border-blue-800 px-6">
               <span className="text-lg font-bold tracking-wide text-white">
                 Practitioner Panel
               </span>
@@ -83,8 +83,8 @@ const PractitionerDashboardLayout = () => {
                               mb-1 h-10 w-full rounded-md px-3 transition-colors
                               ${
                                 isActive
-                                  ? "bg-amber-700 text-white"
-                                  : "text-amber-100 hover:bg-amber-800 hover:text-white"
+                                  ? "bg-blue-200 text-white"
+                                  : "text-amber-100 hover:bg-blue-200 hover:text-white"
                               }
                             `}
                           >
