@@ -72,24 +72,25 @@ export const Landing = () => {
             <div className="flex flex-col sm:flex-row gap-6 items-center pt-4">
               {/* 1. VISIBLE WHEN LOGGED OUT: Standard "Get Started" Button */}
               <SignedOut>
-                <Link to="/sign-in">
-                  <Button className="h-14 px-10 text-lg rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:bg-cyan-400 hover:scale-105 transition-all duration-300">
-                    Get Started <ArrowRight className="ml-2 w-5 h-5" />
+                <div className="flex flex-col sm:flex-row gap-4 items-center">
+                  <Link to="/sign-in">
+                    <Button className="h-14 px-10 text-lg rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:bg-cyan-400 hover:scale-105 transition-all duration-300 font-semibold">
+                      Get Started <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="h-14 px-10 text-lg rounded-2xl bg-white/5 text-white border-white/20 hover:bg-white/10 hover:border-white/40 transition-all backdrop-blur-sm"
+                  >
+                    View User Stories
                   </Button>
-                </Link>
-                <Button
-                  variant="outline"
-                  className="h-14 px-10 text-lg rounded-2xl bg-white/5 text-white border-white/20 hover:bg-white/10 hover:border-white/40 transition-all backdrop-blur-sm"
-                >
-                  View User Stories
-                </Button>
+                </div>
               </SignedOut>
 
               {/* 2. VISIBLE WHEN LOGGED IN: Bigger "Go to Dashboard" Button */}
               <SignedIn>
-                {/* Increased height to h-16 and text to text-xl for emphasis */}
                 <Link to="/admin/dashboard">
-                  <ShinyButton>Dashboard</ShinyButton>
+                  <ShinyButton>Go to Dashboard</ShinyButton>
                 </Link>
               </SignedIn>
             </div>

@@ -1,7 +1,5 @@
-//Implement Authorization Layout 
 import { useUser } from "@clerk/clerk-react";
-import { Navigate, Outlet } from "react-router";
-import { useEffect } from "react";
+import { Navigate, Outlet, useLocation } from "react-router";
 
 const roleToPath = {
     admin: "/admin/dashboard",
@@ -12,6 +10,10 @@ const roleToPath = {
 
 export const ProtectedLayout = () => {
     const { isSignedIn, isLoaded, user } = useUser();
+    const { pathname } = useLocation();
+
+    const role = user?.publicMetadata?.role;
+    const targetPath = typeof role === "string" ? roleToPath[role] : undefined;
 
     if (!isLoaded) {
         return null;
@@ -21,32 +23,26 @@ export const ProtectedLayout = () => {
         return <Navigate to="/sign-in" replace />;
     }
 
-    const role = user?.publicMetadata?.role;
-    const targetPath = roleToPath[role];
+    if (!targetPath) {
+        return (
+            <div className="min-h-screen w-full bg-slate-50">
+                <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
+                    <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
+                        <h1 className="text-xl font-semibold text-slate-800">
+                            Role Pending
+                        </h1>
+                        <p className="mt-2 text-sm text-slate-600">
+                            An admin will assign your role soon.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
-    useEffect(() => {
-        if (isSignedIn) {
-            console.log("Authenticated role:", role);
-        }
-    }, [isSignedIn, role]);
-
-    
-    if (targetPath) {
+    if (!pathname.startsWith(targetPath)) {
         return <Navigate to={targetPath} replace />;
     }
 
-    return (
-        <div className="min-h-screen w-full bg-slate-50">
-            <div className="mx-auto flex min-h-screen max-w-2xl items-center justify-center px-6">
-                <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-                    <h1 className="text-xl font-semibold text-slate-800">
-                        Role Pending
-                    </h1>
-                    <p className="mt-2 text-sm text-slate-600">
-                        An admin will assign your role soon.
-                    </p>
-                </div>
-            </div>
-        </div>
-    );
+    return <Outlet />;
 };
