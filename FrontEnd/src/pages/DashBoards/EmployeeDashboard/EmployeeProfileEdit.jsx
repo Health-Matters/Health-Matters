@@ -1,5 +1,5 @@
 import React from "react";
-import { User, Phone, ShieldAlert, Camera, ArrowLeft } from "lucide-react";
+import { User, Phone, MapPin, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router";
 
 export const EmployeeProfileEdit = () => {
@@ -53,14 +53,12 @@ export const EmployeeProfileEdit = () => {
                   }}
                 />
               </div>
-              
             </div>
 
             <div className="mt-6 border border-gray-200 px-4 py-1 rounded-full text-[11px] font-bold text-gray-400 tracking-[0.2em] uppercase">
               UserID 456
             </div>
 
-            {/* Action Buttons inside the Card */}
             <div className="flex flex-col gap-3 w-full mt-10">
               <button 
                 onClick={() => navigate(-1)}
@@ -91,9 +89,10 @@ export const EmployeeProfileEdit = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <EditField label="Full Name" defaultValue="John De Lavada" />
-              <EditField label="Gender" defaultValue="Male" />
+              <EditField label="First Name" defaultValue="John" />
+              <EditField label="Last Name" defaultValue="De Lavada" />
               <EditField label="Date of Birth" defaultValue="2002-05-12" />
+              <EditField label="Department" defaultValue="Software Engineering" />
             </div>
           </section>
 
@@ -103,31 +102,26 @@ export const EmployeeProfileEdit = () => {
               <div className="p-2 bg-emerald-50 rounded-lg text-[#064E3B]">
                 <Phone size={20} />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">Contact Information</h2>
+              <h2 className="text-xl font-bold text-slate-800">Contact Details</h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <EditField label="Phone Number" defaultValue="07586900" />
               <EditField label="Email" defaultValue="user@gmail.com" type="email" />
-              <EditField label="Address" defaultValue="7th RD, Colombo" fullWidth={true} />
-            </div>
-          </section>
-
-          {/* EMERGENCY CONTACT */}
-          <section className="bg-white p-8 rounded-[32px] shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="p-2 bg-red-50 rounded-lg text-red-600">
-                <ShieldAlert size={20} />
+              <EditField label="Phone Number" defaultValue="07586900" />
+              
+              {/* Split Address into the requested fields */}
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
+                <div className="md:col-span-2 flex items-center gap-2 mb-2 text-slate-400">
+                  <MapPin size={14} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Address Information</span>
+                </div>
+                <EditField label="Address Line 1" defaultValue="7th RD" />
+                <EditField label="Address Line 2" defaultValue="Colombo 03" />
+                <EditField label="City" defaultValue="Colombo" />
+                <EditField label="Postcode" defaultValue="00300" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">Emergency Contact</h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <EditField label="Contact Name" defaultValue="Jasse De Lavada" />
-              <EditField label="Phone Number" defaultValue="074XX4578" />
             </div>
           </section>
-
         </div>
       </main>
     </div>
