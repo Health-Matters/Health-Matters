@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, Link } from "react-router";
 import {
   Home,
   ClipboardList,
@@ -7,6 +7,8 @@ import {
   CalendarDays,
   User,
   ChevronsUpDown,
+  LogOut,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,29 +28,34 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 
 const items = [
   {
-    title: "Overview",
+    title: "Dashboard",
     url: "/employee/dashboard",
     icon: Home,
   },
   {
-    title: "Tasks",
-    url: "/employee/dashboard/tasks",
+    title: "Submit Referral",
+    url: "/employee/dashboard/submit-referral",
     icon: ClipboardList,
   },
   {
-    title: "Reports",
-    url: "/employee/dashboard/reports",
-    icon: BarChart3,
+    title: "My Profile",
+    url: "/employee/dashboard/profile",
+    icon: User,
   },
   {
-    title: "Schedule",
-    url: "/employee/dashboard/schedule",
+    title: "Notifications",
+    url: "/employee/dashboard/notifications",
     icon: CalendarDays,
   },
   {
-    title: "Profile",
-    url: "/employee/dashboard/profile",
+    title: "Help & Advice",
+    url: "/employee/dashboard/help",
     icon: User,
+  },
+  {
+    title: "Accessibility",
+    url: "/employee/dashboard/accessibility",
+    icon: Settings,
   },
 ];
 
@@ -72,7 +79,7 @@ const EmployeeDashboardLayout = () => {
                 <SidebarGroupContent>
                   <SidebarMenu>
                     {items.map((item) => {
-                      const isActive = location.pathname === item.url;
+                      const isActive = location.pathname.startsWith(item.url);
                       return (
                         <SidebarMenuItem key={item.title}>
                           <SidebarMenuButton
@@ -88,10 +95,10 @@ const EmployeeDashboardLayout = () => {
                               }
                             `}
                           >
-                            <a href={item.url} className="flex items-center gap-3">
+                            <Link to={item.url} className="flex items-center gap-3">
                               <item.icon className="h-5 w-5" />
                               <span className="font-medium">{item.title}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -122,7 +129,7 @@ const EmployeeDashboardLayout = () => {
           </Sidebar>
 
           <main className="flex flex-1 flex-col overflow-hidden">
-            <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-emerald-200 bg-white px-6 shadow-sm">
+            {/* <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b border-emerald-200 bg-white px-6 shadow-sm">
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="text-emerald-900 hover:bg-emerald-50 hover:text-emerald-700" />
                 <h2 className="text-lg font-semibold text-slate-800">
@@ -133,7 +140,7 @@ const EmployeeDashboardLayout = () => {
                 <span className="h-2 w-2 rounded-full bg-green-500"></span>
                 <span className="text-sm font-medium text-slate-600">Online</span>
               </div>
-            </header>
+            </header> */}
 
             <div className="flex-1 overflow-auto p-6">
               <Outlet />
@@ -146,3 +153,5 @@ const EmployeeDashboardLayout = () => {
 };
 
 export default EmployeeDashboardLayout;
+
+
