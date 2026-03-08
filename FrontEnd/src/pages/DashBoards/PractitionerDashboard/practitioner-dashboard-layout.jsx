@@ -27,6 +27,7 @@ import {
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+
 const items = [
   {
     title: "Overview",
@@ -135,7 +136,7 @@ const PractitionerDashboardLayout = () => {
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="bg-blue-700 text-white hover:bg-blue-800" />
                 <h2 className="text-lg font-semibold text-slate-800">
-                  Dashboard
+                  {user?.firstName ? `Welcome, ${user.firstName}` : "Welcome to your dashboard"}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
