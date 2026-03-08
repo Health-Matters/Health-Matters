@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   TrendingUp,
   Users,
@@ -10,74 +10,105 @@ import {
   PieChart,
   FileText,
   RefreshCw,
+  Loader,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useGetUsersQuery } from "@/store/api/usersApi";
+import { useGetReferralsQuery, useGetReferralsByPatientIdQuery } from "@/store/api/referralsApi";
+import { useGetServicesQuery } from "@/store/api/servicesApi";
 
 export const TestAnalytics = () => {
-  // Sample KPI data - will be replaced with real data later
-  const kpiMetrics = [
-    {
-      title: "Total Users",
-      value: "12,458",
-      change: "+12.5%",
-      trend: "up",
-      icon: Users,
-      description: "Active users this month",
-    },
-    {
-      title: "System Activity",
-      value: "8,942",
-      change: "+8.3%",
-      trend: "up",
-      icon: Activity,
-      description: "Total activities logged",
-    },
-    {
-      title: "Revenue",
-      value: "$45,231",
-      change: "+23.1%",
-      trend: "up",
-      icon: DollarSign,
-      description: "Monthly revenue",
-    },
-    {
-      title: "Appointments",
-      value: "1,892",
-      change: "-2.4%",
-      trend: "down",
-      icon: Calendar,
-      description: "Scheduled this month",
-    },
-  ];
+  // Fetch API data
+  const { data: usersData = [], isLoading: usersLoading, error: usersError, refetch: refetchUsers } = useGetUsersQuery({});
+  const { data: referralsData = [], isLoading: referralsLoading, error: referralsError, refetch: refetchReferrals } = useGetReferralsQuery();
+  const { data: servicesData = [], isLoading: servicesLoading, error: servicesError, refetch: refetchServices } = useGetServicesQuery({});
+
+  // Calculate metrics from API data
+  const kpiMetrics = useMemo(() => {
+    const totalUsers = usersData?.length || 0;
+    const totalReferrals = referralsData?.length || 0;
+    const totalServices = servicesData?.length || 0;
+    
+    // Count referrals by status
+    const pendingReferrals = referralsData?.filter(r => r.referralStatus === 'pending')?.length || 0;
+    const acceptedReferrals = referralsData?.filter(r => r.referralStatus === 'accepted')?.length || 0;
+    
+    // Count active services
+    const activeServices = servicesData?.filter(s => s.isActive)?.length || 0;
+    
+    // Count users by role
+    const practitioners = usersData?.filter(u => u.role === 'practitioner')?.length || 0;
+    
+    return [
+      {
+        title: "Total Users",
+        value: totalUsers?.toLocaleString(),
+        change: practitioners > 0 ? `${practitioners} practitioners` : "+0",
+        trend: "up",
+        icon: Users,
+        description: "Active users in system",
+      },
+      {
+        title: "Total Services",
+        value: totalServices?.toLocaleString(),
+        change: `${activeServices} active`,
+        trend: activeServices > totalServices / 2 ? "up" : "down",
+        icon: Activity,
+        description: "Services available",
+      },
+      {
+        title: "Total Referrals",
+        value: totalReferrals?.toLocaleString(),
+        change: `${pendingReferrals} pending`,
+        trend: pendingReferrals > 0 ? "up" : "down",
+        icon: Calendar,
+        description: "Referrals in system",
+      },
+      {
+        title: "Accepted Referrals",
+        value: acceptedReferrals?.toLocaleString(),
+        change: totalReferrals > 0 ? `${Math.round((acceptedReferrals / totalReferrals) * 100)}%` : "0%",
+        trend: acceptedReferrals > 0 ? "up" : "down",
+        icon: DollarSign,
+        description: "Accepted and active",
+      },
+    ];
+  }, [usersData, referralsData, servicesData]);
 
   const reportTypes = [
     {
       title: "User Analytics Report",
-      description: "Detailed breakdown of user demographics and activity patterns",
+      description: `Detailed breakdown of users - ${usersData?.length || 0} active users`,
       icon: Users,
-      lastGenerated: "2 days ago",
+      lastGenerated: "Real-time data",
     },
     {
-      title: "Financial Report",
-      description: "Revenue, expenses, and financial performance metrics",
-      icon: DollarSign,
-      lastGenerated: "1 week ago",
-    },
-    {
-      title: "Performance Metrics",
-      description: "System performance and operational efficiency statistics",
-      icon: BarChart3,
-      lastGenerated: "3 days ago",
-    },
-    {
-      title: "Appointment Analytics",
-      description: "Appointment trends, cancellations, and scheduling patterns",
+      title: "Referral Analytics",
+      description: `${referralsData?.length || 0} total referrals tracked`,
       icon: Calendar,
-      lastGenerated: "5 days ago",
+      lastGenerated: "Real-time data",
+    },
+    {
+      title: "Service Performance",
+      description: `${servicesData?.length || 0} services available in system`,
+      icon: BarChart3,
+      lastGenerated: "Real-time data",
+    },
+    {
+      title: "System Health",
+      description: "API connectivity and performance metrics",
+      icon: Activity,
+      lastGenerated: "Real-time data",
     },
   ];
+
+  const handleRefresh = () => {
+    refetchUsers();
+    refetchReferrals();
+    refetchServices();
+  };
 
   return (
     <div className="space-y-6">
@@ -88,19 +119,40 @@ export const TestAnalytics = () => {
             Analytics & KPI
           </h1>
           <p className="mt-2 text-sm text-slate-600">
-            View metrics, track performance, and generate comprehensive reports
+            View metrics, track performance, and manage referrals and services
           </p>
         </div>
-        <Button variant="outline" className="gap-2 text-slate-700 hover:text-slate-900 border-slate-300">
-          <RefreshCw className="h-4 w-4" />
-          Refresh Data
+        <Button 
+          onClick={handleRefresh}
+          variant="outline" 
+          className="gap-2 text-slate-700 hover:text-slate-900 border-slate-300"
+          disabled={usersLoading || referralsLoading || servicesLoading}
+        >
+          <RefreshCw className={`h-4 w-4 ${(usersLoading || referralsLoading || servicesLoading) ? 'animate-spin' : ''}`} />
+          {usersLoading || referralsLoading || servicesLoading ? 'Loading...' : 'Refresh Data'}
         </Button>
       </div>
+
+      {/* Error Messages */}
+      {(usersError || referralsError || servicesError) && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="pt-6 flex items-center gap-2 text-red-700">
+            <Activity className="h-5 w-5" />
+            <p className="text-sm">
+              {usersError && 'Failed to load users. '}
+              {referralsError && 'Failed to load referrals. '}
+              {servicesError && 'Failed to load services. '}
+              Please check your API connection.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* KPI Cards Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {kpiMetrics.map((metric, index) => {
           const Icon = metric.icon;
+          const isLoading = usersLoading || referralsLoading || servicesLoading;
           return (
             <Card key={index} className="hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -110,22 +162,31 @@ export const TestAnalytics = () => {
                 <Icon className="h-4 w-4 text-blue-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">
-                  {metric.value}
-                </div>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge
-                    variant={metric.trend === "up" ? "default" : "destructive"}
-                    className={`text-xs ${
-                      metric.trend === "up"
-                        ? "bg-green-100 text-green-800 hover:bg-green-100"
-                        : "bg-red-100 text-red-800 hover:bg-red-100"
-                    }`}
-                  >
-                    {metric.change}
-                  </Badge>
-                  <p className="text-xs text-slate-500">{metric.description}</p>
-                </div>
+                {isLoading ? (
+                  <div className="flex items-center gap-2 h-8">
+                    <Loader className="h-4 w-4 animate-spin text-blue-600" />
+                    <span className="text-sm text-slate-500">Loading...</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold text-slate-900">
+                      {metric.value}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Badge
+                        variant={metric.trend === "up" ? "default" : "destructive"}
+                        className={`text-xs ${
+                          metric.trend === "up"
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : "bg-red-100 text-red-800 hover:bg-red-100"
+                        }`}
+                      >
+                        {metric.change}
+                      </Badge>
+                      <p className="text-xs text-slate-500">{metric.description}</p>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           );
@@ -138,24 +199,45 @@ export const TestAnalytics = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-blue-600" />
-              Performance Overview
+              Referral Status Distribution
             </CardTitle>
             <CardDescription>
-              Monthly performance trends and comparisons
+              Breakdown of referrals by current status
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
-              <div className="text-center">
-                <BarChart3 className="mx-auto h-12 w-12 text-slate-400" />
-                <p className="mt-2 text-sm font-medium text-slate-600">
-                  Chart Visualization
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Integration pending - will display performance metrics
-                </p>
+            {referralsLoading ? (
+              <div className="flex h-[300px] items-center justify-center">
+                <Loader className="h-8 w-8 animate-spin text-blue-600" />
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4 h-[300px] flex flex-col justify-center">
+                {["pending", "accepted", "rejected", "completed"].map((status) => {
+                  const count = referralsData?.filter(r => r.referralStatus === status)?.length || 0;
+                  const total = referralsData?.length || 1;
+                  const percentage = Math.round((count / total) * 100);
+                  return (
+                    <div key={status} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700 capitalize">{status}</span>
+                        <span className="text-sm font-semibold text-slate-900">{count} ({percentage}%)</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all ${
+                            status === 'pending' ? 'bg-orange-500' :
+                            status === 'accepted' ? 'bg-blue-500' :
+                            status === 'completed' ? 'bg-green-500' :
+                            'bg-red-500'
+                          }`}
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -163,24 +245,46 @@ export const TestAnalytics = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <PieChart className="h-5 w-5 text-blue-600" />
-              Distribution Analysis
+              User Roles Distribution
             </CardTitle>
             <CardDescription>
-              User segments and category breakdown
+              Breakdown of users by role
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex h-[300px] items-center justify-center rounded-lg border-2 border-dashed border-slate-200 bg-slate-50">
-              <div className="text-center">
-                <PieChart className="mx-auto h-12 w-12 text-slate-400" />
-                <p className="mt-2 text-sm font-medium text-slate-600">
-                  Chart Visualization
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  Integration pending - will display distribution data
-                </p>
+            {usersLoading ? (
+              <div className="flex h-[300px] items-center justify-center">
+                <Loader className="h-8 w-8 animate-spin text-blue-600" />
               </div>
-            </div>
+            ) : (
+              <div className="space-y-4 h-[300px] flex flex-col justify-center">
+                {["admin", "practitioner", "manager", "employee"].map((role) => {
+                  const count = usersData?.filter(u => u.role === role)?.length || 0;
+                  const total = usersData?.length || 1;
+                  const percentage = Math.round((count / total) * 100);
+                  const colors = {
+                    admin: 'bg-red-500',
+                    practitioner: 'bg-blue-500',
+                    manager: 'bg-purple-500',
+                    employee: 'bg-green-500'
+                  };
+                  return (
+                    <div key={role} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700 capitalize">{role}</span>
+                        <span className="text-sm font-semibold text-slate-900">{count} ({percentage}%)</span>
+                      </div>
+                      <div className="w-full bg-slate-200 rounded-full h-2">
+                        <div 
+                          className={`h-2 rounded-full transition-all ${colors[role]}`}
+                          style={{ width: `${percentage}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -247,29 +351,38 @@ export const TestAnalytics = () => {
           <div className="grid gap-4 md:grid-cols-3">
             <div className="rounded-lg border border-slate-200 p-4">
               <p className="text-sm font-medium text-slate-600">
-                Average Response Time
+                Referral Completion Rate
               </p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">2.4s</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">
+                {referralsData?.length > 0 
+                  ? `${Math.round((referralsData.filter(r => r.referralStatus === 'completed').length / referralsData.length) * 100)}%`
+                  : "0%"
+                }
+              </p>
               <p className="mt-1 text-xs text-green-600">
-                ↓ 0.3s faster than last week
+                {referralsData?.filter(r => r.referralStatus === 'completed').length || 0} completed
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 p-4">
               <p className="text-sm font-medium text-slate-600">
-                User Satisfaction
+                Pending Referrals
               </p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">94.2%</p>
-              <p className="mt-1 text-xs text-green-600">
-                ↑ 2.1% increase this month
+              <p className="mt-2 text-2xl font-bold text-slate-900">
+                {referralsData?.filter(r => r.referralStatus === 'pending').length || 0}
+              </p>
+              <p className="mt-1 text-xs text-orange-600">
+                Awaiting assignment
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 p-4">
               <p className="text-sm font-medium text-slate-600">
-                System Uptime
+                Active Services
               </p>
-              <p className="mt-2 text-2xl font-bold text-slate-900">99.9%</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">
+                {servicesData?.filter(s => s.isActive).length || 0}
+              </p>
               <p className="mt-1 text-xs text-green-600">
-                ✓ Above target threshold
+                Out of {servicesData?.length || 0} total
               </p>
             </div>
           </div>
