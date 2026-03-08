@@ -1,0 +1,67 @@
+# =====================
+# Node.js & General
+# =====================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+.DS_Store
+
+# =====================
+# Environment Files
+# =====================
+.env
+.env.local
+.env.*.local
+
+# =====================
+# Logs
+# =====================
+logs/
+*.log
+*.out
+
+# =====================
+# Frontend (React/Vite)
+# =====================
+# Build output
+/dist
+/build
+/out
+
+# Local environment overrides
+/.env.local
+/.env.development.local
+/.env.test.local
+/.env.production.local
+
+# Editor folders
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# =====================
+# Backend (Node/Express)
+# =====================
+# Node build outputs
+/dist
+/build
+
+# Database files (if any local storage)
+*.sqlite
+*.db
+*.mdb
+*.tgz
+
+# =====================
+# Misc
+# =====================
+*.swp
+*.swo
+*.bak
+*.tmp
+
+.ngrok.yml
