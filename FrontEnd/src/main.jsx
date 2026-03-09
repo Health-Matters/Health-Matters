@@ -56,7 +56,7 @@ createRoot(document.getElementById('root')).render(
           <Route path='/' element={<LandingPage />} />
           </Route>
           <Route path='/dashboard' element={<ProtectedLayout />} />
-          // Admin Dashboard Routes
+          {/* Admin Dashboard Routes */}
           <Route path='/admin/dashboard' element={ <AdminDashboardLayout /> }>
             <Route index element={ <TestOverview /> } />
             <Route path='referrals' element={ <TestFeature /> } />
@@ -64,7 +64,7 @@ createRoot(document.getElementById('root')).render(
             <Route path='users' element={ <TestUsers /> } />
             <Route path='settings' element={ <TestSettings /> } />
           </Route>
-          // Employee Dashboard Routes
+          {/* Employee Dashboard Routes */}
           <Route path='/employee/dashboard' element={ <EmployeeDashboardLayout /> }>
             <Route index element={ <EmployeeTestOverview /> } />
             <Route path='tasks' element={ <EmployeeTestTasks /> } />
@@ -72,7 +72,7 @@ createRoot(document.getElementById('root')).render(
             <Route path='schedule' element={ <EmployeeTestSchedule /> } />
             <Route path='profile' element={ <EmployeeTestProfile /> } />
           </Route>
-          // Practitioner Dashboard Routes
+          {/* Practitioner Dashboard Routes */}
           <Route path='/practitioner/dashboard' element={ <PractitionerDashboardLayout /> }>
             <Route index element={ <PractitionerTestOverview /> } />
             <Route path='patients' element={ <PractitionerTestPatients /> } />
@@ -80,7 +80,7 @@ createRoot(document.getElementById('root')).render(
             <Route path='appointments' element={ <PractitionerTestAppointments /> } />
             <Route path='profile' element={ <PractitionerTestProfile /> } />
           </Route>
-          // Manager Dashboard Routes
+          {/* Manager Dashboard Routes */}
           <Route path='/manager/dashboard' element={ <ManagerDashboardLayout /> }>
             <Route index element={ <ManagerTestOverview /> } />
             <Route path='team' element={ <ManagerTestTeam /> } />
