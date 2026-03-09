@@ -9,5 +9,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "skipLibCheck": true
-  }
+  },
+  "include": ["src/**/*"]
 }

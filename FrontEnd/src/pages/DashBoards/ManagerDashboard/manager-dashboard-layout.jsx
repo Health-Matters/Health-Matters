@@ -7,6 +7,8 @@ import {
   Wallet,
   User,
   ChevronsUpDown,
+  ClipboardPlus,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +38,11 @@ const items = [
     icon: Users,
   },
   {
+    title: "Referral",
+    url: "/manager/dashboard/referral",
+    icon: ClipboardPlus,
+  },
+  {
     title: "Insights",
     url: "/manager/dashboard/insights",
     icon: LineChart,
@@ -52,9 +59,28 @@ const items = [
   },
 ];
 
+// Accessibility/Settings is separated visually at the bottom of the nav
+const bottomItems = [
+  {
+    title: "Accessibility",
+    url: "/manager/dashboard/accessibility",
+    icon: Settings,
+  },
+];
+
 const ManagerDashboardLayout = () => {
   const { user } = useUser();
   const location = useLocation();
+
+  const isActive = (url) => location.pathname === url;
+
+  const navItemClass = (url) => `
+    mb-1 h-10 w-full rounded-md px-3 transition-colors
+    ${isActive(url)
+      ? "bg-slate-700 text-white"
+      : "text-slate-100 hover:bg-slate-800 hover:text-white"
+    }
+  `;
 
   return (
     <TooltipProvider>
@@ -67,35 +93,51 @@ const ManagerDashboardLayout = () => {
               </span>
             </SidebarHeader>
 
-            <SidebarContent className="px-3 py-4">
+            <SidebarContent className="flex flex-col justify-between px-3 py-4">
+              {/* Main navigation */}
               <SidebarGroup>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {items.map((item) => {
-                      const isActive = location.pathname === item.url;
-                      return (
-                        <SidebarMenuItem key={item.title}>
-                          <SidebarMenuButton
-                            asChild
-                            tooltip={item.title}
-                            isActive={isActive}
-                            className={`
-                              mb-1 h-10 w-full rounded-md px-3 transition-colors
-                              ${
-                                isActive
-                                  ? "bg-slate-700 text-white"
-                                  : "text-slate-100 hover:bg-slate-800 hover:text-white"
-                              }
-                            `}
-                          >
-                            <a href={item.url} className="flex items-center gap-3">
-                              <item.icon className="h-5 w-5" />
-                              <span className="font-medium">{item.title}</span>
-                            </a>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
+                    {items.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
+                          isActive={isActive(item.url)}
+                          className={navItemClass(item.url)}
+                        >
+                          <a href={item.url} className="flex items-center gap-3">
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </a>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+
+              {/* Bottom section: Accessibility/Settings */}
+              <SidebarGroup className="mt-auto">
+                {/* Subtle divider */}
+                <div className="mx-3 mb-3 border-t border-slate-700" />
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {bottomItems.map((item) => (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          tooltip={item.title}
+                          isActive={isActive(item.url)}
+                          className={navItemClass(item.url)}
+                        >
+                          <a href={item.url} className="flex items-center gap-3">
+                            <item.icon className="h-5 w-5" />
+                            <span className="font-medium">{item.title}</span>
+                          </a>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
@@ -126,12 +168,8 @@ const ManagerDashboardLayout = () => {
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="text-slate-900 hover:bg-slate-50 hover:text-slate-700" />
                 <h2 className="text-lg font-semibold text-slate-800">
-                  Dashboard
+                  Health Matters Main Dashboard
                 </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-green-500"></span>
-                <span className="text-sm font-medium text-slate-600">Online</span>
               </div>
             </header>
 

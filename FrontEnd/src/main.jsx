@@ -16,11 +16,16 @@ import { TestUsers } from "./pages/DashBoards/AdminDashboard/test-users.jsx";
 import { TestSettings } from "./pages/DashBoards/AdminDashboard/test-settings.jsx";
 // Import Employee Dashboard
 import EmployeeDashboardLayout from "./pages/DashBoards/EmployeeDashboard/employee-dashboard-layout.jsx";
-import { EmployeeTestOverview } from "./pages/DashBoards/EmployeeDashboard/test-overview.jsx";
-import { EmployeeTestTasks } from "./pages/DashBoards/EmployeeDashboard/test-tasks.jsx";
-import { EmployeeTestReports } from "./pages/DashBoards/EmployeeDashboard/test-reports.jsx";
-import { EmployeeTestProfile } from "./pages/DashBoards/EmployeeDashboard/test-profile.jsx";
-import { EmployeeTestSchedule } from "./pages/DashBoards/EmployeeDashboard/test-schedule.jsx";
+import { EmployeeOverview } from "./pages/DashBoards/EmployeeDashboard/EmployeeOverview.jsx";
+import { EmployeeProfile } from "./pages/DashBoards/EmployeeDashboard/EmployeeProfile.jsx";
+import { EmployeeProfileEdit } from "./pages/DashBoards/EmployeeDashboard/EmployeeProfileEdit.jsx";
+
+// new pages for employee dashboard
+import { SubmitReferral } from "./pages/DashBoards/EmployeeDashboard/SubmitReferral.jsx";
+import { Notifications } from "./pages/DashBoards/EmployeeDashboard/Notifications.jsx";
+import { HelpAndAdvice } from "./pages/DashBoards/EmployeeDashboard/HelpAndAdvice.jsx";
+import { Accessibility } from "./pages/DashBoards/EmployeeDashboard/Accessibility.jsx";
+
 // Import Practitioner Dashboard
 import PractitionerDashboardLayout from "./pages/DashBoards/PractitionerDashboard/practitioner-dashboard-layout.jsx";
 import { PractitionerTestOverview } from "./pages/DashBoards/PractitionerDashboard/test-overview.jsx";
@@ -31,7 +36,7 @@ import { PractitionerTestAppointments } from "./pages/DashBoards/PractitionerDas
 import { PractitionerTestCreateReferral } from './pages/DashBoards/PractitionerDashboard/test-create-referral.jsx';
 // Import Manager Dashboard
 import ManagerDashboardLayout from "./pages/DashBoards/ManagerDashboard/manager-dashboard-layout.jsx";
-import { ManagerTestOverview } from "./pages/DashBoards/ManagerDashboard/test-overview.jsx";
+import { ManagerOverview, ManagerReferralSubmission } from "./pages/DashBoards/ManagerDashboard/manager-dashboard-pages.jsx";
 import { ManagerTestTeam } from "./pages/DashBoards/ManagerDashboard/test-team.jsx";
 import { ManagerTestInsights } from "./pages/DashBoards/ManagerDashboard/test-insights.jsx";
 import { ManagerTestProfile } from "./pages/DashBoards/ManagerDashboard/test-profile.jsx";
@@ -85,11 +90,13 @@ const ClerkWithRoutes = () => {
             </Route>
             {/* Employee Dashboard Routes */}
             <Route path="/employee/dashboard" element={<EmployeeDashboardLayout />}>
-              <Route index element={<EmployeeTestOverview />} />
-              <Route path="tasks" element={<EmployeeTestTasks />} />
-              <Route path="reports" element={<EmployeeTestReports />} />
-              <Route path="schedule" element={<EmployeeTestSchedule />} />
-              <Route path="profile" element={<EmployeeTestProfile />} />
+              <Route index element={<EmployeeOverview />} />
+              <Route path="profile" element={<EmployeeProfile />} />
+              <Route path="/employee/dashboard/profile/edit" element={<EmployeeProfileEdit />} />
+              <Route path="submit-referral" element={<SubmitReferral />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="help" element={<HelpAndAdvice />} />
+              <Route path="accessibility" element={<Accessibility />} />
             </Route>
             {/* Practitioner Dashboard Routes */}
             <Route path="/practitioner/dashboard" element={<PractitionerDashboardLayout />}>
@@ -102,8 +109,9 @@ const ClerkWithRoutes = () => {
             </Route>
             {/* Manager Dashboard Routes */}
             <Route path="/manager/dashboard" element={<ManagerDashboardLayout />}>
-              <Route index element={<ManagerTestOverview />} />
+              <Route index element={<ManagerOverview />} />  
               <Route path="team" element={<ManagerTestTeam />} />
+              <Route path="referral" element={<ManagerReferralSubmission />} /> 
               <Route path="insights" element={<ManagerTestInsights />} />
               <Route path="budget" element={<ManagerTestBudget />} />
               <Route path="profile" element={<ManagerTestProfile />} />
