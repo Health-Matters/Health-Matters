@@ -102,7 +102,7 @@ export const HelpAndAdvice = () => {
     <div className="p-8">
       <h1 className="text-4xl font-bold mb-3">Help & Advice</h1>
       <p className="text-gray-600 mb-8">
-        Access structured clinical guidance and care documents from your services.
+        Access your care plans and clinical guidance.
       </p>
 
       <div className="flex relative items-start">
@@ -113,7 +113,7 @@ export const HelpAndAdvice = () => {
         >
           <div className="bg-white rounded-2xl shadow-sm p-10">
             <h2 className="text-3xl font-semibold mb-8">
-              Referral History
+              Your Care Plans
             </h2>
 
             <div className="space-y-6">
