@@ -5,6 +5,7 @@ import connectDB from './config/db';
 import userRoutes from './routes/userRoutes';
 import referralRoutes from './routes/referralRoutes';
 import serviceRoutes from './routes/serviceRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import { loggerMiddleware } from './middlewares/logger-middleware';
 import { clerkMiddleware } from '@clerk/express';
 import webHooksRouter from './middlewares/webhooks/webhooks';
@@ -33,6 +34,7 @@ server.use(clerkMiddleware());
 server.use('/api/users', userRoutes);
 server.use('/api/referrals', referralRoutes);
 server.use('/api/services', serviceRoutes);
+server.use('/api/notifications', notificationRoutes);
 // Global Error Handler (must be after all routes)
 server.use(globalErrorHandlingMiddleware);
 // Connect to Database

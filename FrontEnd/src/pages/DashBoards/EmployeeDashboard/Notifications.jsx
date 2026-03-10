@@ -1,35 +1,103 @@
-import React, { useState } from 'react';
-import { CheckCheck, Stethoscope, CalendarDays, TestTube2, UserRoundCheck, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { CheckCheck, CalendarDays, UserRoundCheck, X, BellRing, FileText, CheckCircle2 } from 'lucide-react';
+import { useGetNotificationsQuery, useMarkNotificationReadMutation } from '../../../store/api';
+
+const formatDateGroup = (dateString) => {
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+
+  const isSameDay = (d1, d2) =>
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate();
+
+  if (isSameDay(date, today)) return 'Today';
+  if (isSameDay(date, yesterday)) return 'Yesterday';
+  return 'Earlier';
+};
+
+const formatDisplayDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const getIcon = (type) => {
+  switch (type) {
+    case 'referral_assigned':
+    case 'referral_submitted':
+      return <BellRing className="text-sky-500" size={18} />;
+    case 'appointment_scheduled':
+    case 'appointment_reminder_24h':
+    case 'appointment_reminder_1h':
+      return <CalendarDays className="text-orange-400" size={18} />;
+    case 'appointment_cancelled':
+      return <X className="text-red-500" size={18} />;
+    case 'outcome_report_ready':
+    case 'follow_up_required':
+      return <FileText className="text-purple-500" size={18} />;
+    case 'appointment_completed':
+      return <CheckCircle2 className="text-emerald-500" size={18} />;
+    default:
+      return <UserRoundCheck className="text-slate-500" size={18} />;
+  }
+};
 
 export const Notifications = () => {
   const [filter, setFilter] = useState('all'); // 'all' or 'unread'
   const [selectedNote, setSelectedNote] = useState(null);
-  const [notifications, setNotifications] = useState([
-    { id: 1, title: 'Your appointment with Dr. Silva is confirmed for 28 July at 10:30 AM', date: 'July 20, 2026 | 08:00 PM', type: 'doc', group: 'Today', unread: true, message: 'Your appointment is confirmed with Dr. Silva at the General Medical Center. Please arrive 15 minutes early with your ID.' },
-    { id: 2, title: 'Reminder: You have a clinic visit scheduled tomorrow at 9:00 AM', date: 'July 20, 2026 | 05:10 PM', type: 'cal', group: 'Today', unread: true, message: 'This is a friendly reminder of your scheduled visit tomorrow.' },
-    { id: 3, title: 'Your blood test results are now available', date: 'July 20, 2026 | 11:20 AM', type: 'lab', group: 'Today', unread: true, message: 'Your recent blood work results have been processed.' },
-    { id: 4, title: 'Your personal details were updated successfully', date: 'July 20, 2026 | 08:16 AM', type: 'check', group: 'Today', unread: false, message: 'Your profile information has been updated.' },
-    { id: 5, title: 'Your blood results are under review', date: 'July 19, 2026 | 10:15 AM', type: 'lab', group: 'Yesterday', unread: true, message: 'Dr. Silva is currently reviewing your results.' },
-  ]);
+  const { data: notifications = [], isLoading, isError } = useGetNotificationsQuery();
+  const [markRead] = useMarkNotificationReadMutation();
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, unread: false })));
+  if (isLoading) {
+    return (
+      <div className="m-6 text-slate-700">
+        <p className="text-lg font-semibold">Loading notifications…</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="m-6 text-red-600">
+        <p className="text-lg font-semibold">Unable to load notifications. Please try again later.</p>
+      </div>
+    );
+  }
+
+  const enrichedNotifications = useMemo(() => {
+    return (notifications || []).map((notification) => {
+      const date = notification.createdAt || notification.updatedAt || new Date().toISOString();
+      return {
+        id: notification._id,
+        title: notification.title,
+        message: notification.message,
+        date: formatDisplayDate(date),
+        group: formatDateGroup(date),
+        type: notification.type,
+        unread: !notification.channels?.inApp?.read,
+      };
+    });
+  }, [notifications]);
+
+  const filteredNotifications = useMemo(() => {
+    return enrichedNotifications.filter((n) => (filter === 'all' ? true : n.unread));
+  }, [enrichedNotifications, filter]);
+
+  const markAllAsRead = async () => {
+    await Promise.all(
+      enrichedNotifications
+        .filter((n) => n.unread)
+        .map((n) => markRead(n.id).catch(() => null))
+    );
   };
-
-  const getIcon = (type) => {
-    switch (type) {
-      case 'doc': return <Stethoscope className="text-sky-500" size={18} />;
-      case 'cal': return <CalendarDays className="text-orange-400" size={18} />;
-      case 'lab': return <TestTube2 className="text-purple-500" size={18} />;
-      case 'check': return <UserRoundCheck className="text-slate-500" size={18} />;
-      default: return null;
-    }
-  };
-
-  // Logic to decide which notifications to show
-  const filteredNotifications = notifications.filter(n => 
-    filter === 'all' ? true : n.unread === true
-  );
 
   return (
     <div style={{ fontFamily: 'Arial, sans-serif' }}>
@@ -54,7 +122,7 @@ export const Notifications = () => {
                 onClick={() => setFilter('unread')}
                 className={`cursor-pointer transition-all ${filter === 'unread' ? 'border-b-2 border-slate-900 text-slate-900' : 'text-slate-400'}`}
               >
-                Unread ({notifications.filter(n => n.unread).length})
+                Unread ({enrichedNotifications.filter(n => n.unread).length})
               </span>
             </div>
             <button onClick={markAllAsRead} className="text-slate-700 text-xs font-bold flex items-center gap-1">
@@ -63,7 +131,7 @@ export const Notifications = () => {
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2">
-            {['Today', 'Yesterday'].map((group) => {
+            {['Today', 'Yesterday', 'Earlier'].map((group) => {
               const groupNotes = filteredNotifications.filter(n => n.group === group);
               
               // Only show the group header if there are notes in that group after filtering
@@ -77,8 +145,8 @@ export const Notifications = () => {
                       <div 
                         key={note.id} 
                         onClick={() => { 
-                          setSelectedNote(note); 
-                          setNotifications(notifications.map(n => n.id === note.id ? {...n, unread: false} : n)); 
+                          markRead(note.id).catch(() => null);
+                          setSelectedNote({ ...note, unread: false });
                         }}
                         className={`cursor-pointer rounded-2xl flex items-center justify-between p-4 shadow-sm border transition-all ${
                           selectedNote?.id === note.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:border-slate-300'

@@ -31,6 +31,6 @@ const baseQueryWithAuth = fetchBaseQuery({
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithAuth,
-  tagTypes: ['Users', 'Referrals', 'Services'],
+  tagTypes: ['Users', 'Referrals', 'Services', 'Notifications'],
   endpoints: () => ({}),
 });

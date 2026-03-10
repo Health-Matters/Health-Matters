@@ -4,7 +4,7 @@ export interface INotification extends Document {
   recipientId: mongoose.Types.ObjectId;
   
   type: 'referral_submitted' | 'referral_triaged' | 'referral_assigned' | 'appointment_scheduled' | 
-        'appointment_reminder_24h' | 'appointment_reminder_1h' | 'appointment_cancelled' | 
+        'appointment_completed' | 'appointment_reminder_24h' | 'appointment_reminder_1h' | 'appointment_cancelled' | 
         'outcome_report_ready' | 'follow_up_required';
   
   title: string;
@@ -52,6 +52,7 @@ const NotificationSchema: Schema = new Schema(
         'referral_triaged',
         'referral_assigned',
         'appointment_scheduled',
+        'appointment_completed',
         'appointment_reminder_24h',
         'appointment_reminder_1h',
         'appointment_cancelled',

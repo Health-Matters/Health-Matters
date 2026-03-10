@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Referral } from '../models/Referral';
+import Notification from '../models/Notification';
+import { User } from '../models/User';
 import { ZodError } from 'zod';
 import {
 	assignReferralBodySchema,
@@ -184,6 +186,32 @@ export const assignReferralById = async (req: Request, res: Response, next: Next
 
 		if (!updatedReferral) {
 			throw new NotFoundError('Referral not found');
+		}
+
+		// Create an in-app notification for the patient when a practitioner is assigned
+		try {
+			const patient = await User.findOne({ clerkUserId: updatedReferral.patientClerkUserId });
+			const practitioner = await User.findOne({ clerkUserId: practitionerClerkUserId });
+
+			if (patient) {
+				const practitionerName = practitioner ? `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim() : 'your practitioner';
+				await Notification.create({
+					recipientId: patient._id,
+					type: 'referral_assigned',
+					title: 'Your referral has been appointed',
+					message: `Your referral has been assigned to ${practitionerName}.`,
+					relatedEntityType: 'referral',
+					relatedEntityId: updatedReferral._id,
+					channels: {
+						email: { sent: false },
+						sms: { sent: false },
+						inApp: { read: false },
+					},
+					priority: 'medium',
+				});
+			}
+		} catch (notificationError) {
+			console.error('Failed to create referral assignment notification:', notificationError);
 		}
 
 		res.status(200).json(updatedReferral);

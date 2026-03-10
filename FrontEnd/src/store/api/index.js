@@ -23,3 +23,8 @@ export {
   useUpdateServiceByIdMutation,
   useDeleteServiceByIdMutation,
 } from './servicesApi';
+
+export {
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+} from './notificationsApi';
