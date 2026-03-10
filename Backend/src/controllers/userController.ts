@@ -3,7 +3,7 @@ import { User } from './../models/User';
 import { ZodError } from 'zod';
 import { getUsersQuerySchema, updateUserBodySchema } from '../Dtos/user.dto';
 import { ValidationError, NotFoundError, UnauthorizedError } from '../errors/errors';
-import { getAuth } from '@clerk/express';
+import { getAuth, clerkClient } from '@clerk/express';
 
 const formatValidationErrors = (error: ZodError) =>
 	error.issues.map((issue) => ({
@@ -11,7 +11,7 @@ const formatValidationErrors = (error: ZodError) =>
 		message: issue.message,
 	}));
 
-export const getAllUsers = async (req: Request, res: Response, next:NextFunction) => {
+export const getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const parsedQuery = getUsersQuerySchema.safeParse(req.query);
 
@@ -21,12 +21,10 @@ export const getAllUsers = async (req: Request, res: Response, next:NextFunction
 
     const users = await User.find(parsedQuery.data);
     res.status(200).json(users);
-    console.log("Users: ", users);
-    
   } catch (error) {
     next(error);
   }
-}
+};
 
 export const getUserByClerkId = async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -36,10 +34,43 @@ export const getUserByClerkId = async (req: Request, res: Response, next: NextFu
 			throw new UnauthorizedError('Authentication required');
 		}
 
-		const user = await User.findOne({ clerkUserId: auth.userId });
+		let user = await User.findOne({ clerkUserId: auth.userId });
 
+		// ── Upsert fallback ────────────────────────────────────────────────────
+		// If the Clerk webhook hasn't run yet (common in local dev without ngrok),
+		// the user exists in Clerk but not in MongoDB. We auto-create them here
+		// so the app works without requiring the webhook to have fired first.
 		if (!user) {
-			throw new NotFoundError('User not found');
+			try {
+				const clerkUser = await clerkClient.users.getUser(auth.userId);
+				const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+
+				if (!email) {
+					throw new NotFoundError('User not found and could not be auto-created (no email in Clerk)');
+				}
+
+				// Check for duplicate email (edge case: race condition)
+				const existing = await User.findOne({ email });
+				if (existing) {
+					// Link the existing record to this Clerk ID
+					existing.clerkUserId = auth.userId;
+					user = await existing.save();
+				} else {
+					user = await User.create({
+						clerkUserId: auth.userId,
+						email,
+						firstName: clerkUser.firstName ?? undefined,
+						lastName: clerkUser.lastName ?? undefined,
+						role: (clerkUser.publicMetadata?.role as string) ?? 'employee',
+					});
+				}
+
+				console.log(`✅ getUserByClerkId: auto-created user for clerkUserId ${auth.userId}`);
+			} catch (clerkErr) {
+				// If Clerk API call fails, fall back to a plain NotFoundError
+				console.error('Failed to auto-create user from Clerk:', clerkErr);
+				throw new NotFoundError('User not found');
+			}
 		}
 
 		res.status(200).json(user);
@@ -77,9 +108,3 @@ export const updateUserByClerkId = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
-
-
-
-
-
-
