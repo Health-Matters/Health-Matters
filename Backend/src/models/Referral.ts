@@ -1,15 +1,29 @@
 import mongoose from 'mongoose';
 
+const statusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'],
+      required: true,
+    },
+    changedByClerkUserId: { type: String },
+    note: { type: String, trim: true },
+    changedAt: { type: Date, default: Date.now },
+  },
+  { _id: false }
+);
+
 const referralSchema = new mongoose.Schema(
   {
     patientClerkUserId: { type: String, required: true },
-    submittedByClerkUserId: { type: String},
-    practitionerClerkUserId: { type: String},
+    submittedByClerkUserId: { type: String },
+    practitionerClerkUserId: { type: String },
     serviceType: { type: String, trim: true },
     referralReason: { type: String, trim: true },
     referralStatus: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected'],
+      enum: ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'],
       default: 'pending',
     },
     notes: { type: String, trim: true },
@@ -18,6 +32,8 @@ const referralSchema = new mongoose.Schema(
     acceptedDate: { type: Date },
     rejectedDate: { type: Date },
     completedDate: { type: Date },
+    isConfidential: { type: Boolean, default: false },
+    statusHistory: { type: [statusHistorySchema], default: [] },
   },
   {
     timestamps: true,
@@ -25,4 +41,5 @@ const referralSchema = new mongoose.Schema(
 );
 
 export const Referral = mongoose.model('Referral', referralSchema);
+
 
