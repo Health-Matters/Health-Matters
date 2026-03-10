@@ -116,22 +116,18 @@ export const EmployeeProfileEdit = () => {
     );
   }
 
-  // Error State
-  if (isError) {
-    return (
-      <div className="max-w-7xl mx-auto p-6 min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 text-red-500 bg-red-50 p-10 rounded-3xl border border-red-100">
-          <AlertCircle size={40} />
-          <p className="text-sm font-semibold">Failed to load profile. Please try again.</p>
-        </div>
-      </div>
-    );
-  }
-
   const fullName = `${form.firstName} ${form.lastName}`.trim() || "—";
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8 min-h-screen">
+
+      {/* Error banner (still allow editing) */}
+      {isError && (
+        <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-600 px-5 py-3 rounded-2xl text-sm font-semibold">
+          <AlertCircle size={18} />
+          Failed to load profile. You can still enter your details and save.
+        </div>
+      )}
 
       {/* --- HEADER --- */}
       <header className="flex items-center gap-4">

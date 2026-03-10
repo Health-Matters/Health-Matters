@@ -8,6 +8,26 @@ export const EmployeeProfile = () => {
   const navigate = useNavigate();
   const { data: user, isLoading, isError, error } = useGetMeQuery();
 
+  const fallbackUser = {
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    department: "",
+    role: "",
+    dateOfBirth: "",
+    address: {
+      line1: "",
+      line2: "",
+      city: "",
+      postcode: "",
+    },
+  };
+
+  const profile = user ?? fallbackUser;
+
+  const displayValue = (value) => value || "—";
+
   // Reusable Display Field (No Input)
   const DisplayField = ({ label, value, fullWidth = false }) => (
     <div className={fullWidth ? "md:col-span-2" : ""}>
@@ -15,7 +35,7 @@ export const EmployeeProfile = () => {
         {label}
       </p>
       <div className="w-full bg-gray-50 rounded-2xl px-5 py-3.5 text-slate-700 font-semibold border border-transparent shadow-sm">
-        {value || "—"}
+        {displayValue(value)}
       </div>
     </div>
   );
@@ -32,27 +52,24 @@ export const EmployeeProfile = () => {
     );
   }
 
-  // Error State
-  if (isError) {
-    return (
-      <div className="max-w-7xl mx-auto p-6 min-h-screen flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 text-red-500 bg-red-50 p-10 rounded-3xl border border-red-100">
-          <AlertCircle size={40} />
-          <p className="text-sm font-semibold">
-            {error?.data?.message || "Failed to load profile. Please try again."}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const fullName = `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "—";
-  const dob = user?.dateOfBirth
-    ? new Date(user.dateOfBirth).toLocaleDateString("en-GB")
+  const fullName = `${profile.firstName} ${profile.lastName}`.trim() || "—";
+  const dob = profile.dateOfBirth
+    ? new Date(profile.dateOfBirth).toLocaleDateString("en-GB")
     : "—";
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8 min-h-screen">
+      {isError && (
+        <div className="rounded-3xl border border-red-100 bg-red-50 p-6 text-red-700">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} />
+            <p className="text-sm font-semibold">
+              {error?.data?.message || "Profile data could not be loaded. Showing placeholders."}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* --- TOP HEADER BAR --- */}
       <header className="flex justify-between items-center">
         <div>
@@ -94,7 +111,7 @@ export const EmployeeProfile = () => {
 
             <h2 className="mt-6 text-2xl font-bold text-slate-800">{fullName}</h2>
             <div className="mt-2 border border-gray-200 px-4 py-1 rounded-full text-[11px] font-bold text-gray-400 tracking-[0.2em] uppercase">
-              {user?.department || user?.role || "Employee"}
+              {displayValue(profile.department || profile.role)}
             </div>
           </div>
         </section>
@@ -112,10 +129,10 @@ export const EmployeeProfile = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DisplayField label="First Name" value={user?.firstName} />
-              <DisplayField label="Last Name" value={user?.lastName} />
+              <DisplayField label="First Name" value={profile.firstName} />
+              <DisplayField label="Last Name" value={profile.lastName} />
               <DisplayField label="Date of Birth" value={dob} />
-              <DisplayField label="Department" value={user?.department} />
+              <DisplayField label="Department" value={profile.department} />
             </div>
           </section>
 
@@ -129,8 +146,8 @@ export const EmployeeProfile = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <DisplayField label="Email" value={user?.email} />
-              <DisplayField label="Phone Number" value={user?.phone} />
+              <DisplayField label="Email" value={profile.email} />
+              <DisplayField label="Phone Number" value={profile.phone} />
 
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-50">
                 <div className="md:col-span-2 flex items-center gap-2 mb-2 text-slate-400">
@@ -139,10 +156,10 @@ export const EmployeeProfile = () => {
                     Address Information
                   </span>
                 </div>
-                <DisplayField label="Address Line 1" value={user?.address?.line1} />
-                <DisplayField label="Address Line 2" value={user?.address?.line2} />
-                <DisplayField label="City" value={user?.address?.city} />
-                <DisplayField label="Postcode" value={user?.address?.postcode} />
+                <DisplayField label="Address Line 1" value={profile.address?.line1} />
+                <DisplayField label="Address Line 2" value={profile.address?.line2} />
+                <DisplayField label="City" value={profile.address?.city} />
+                <DisplayField label="Postcode" value={profile.address?.postcode} />
               </div>
             </div>
           </section>
