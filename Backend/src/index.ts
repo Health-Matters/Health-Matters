@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from "dotenv";
 import connectDB from './config/db';
 import userRoutes from './routes/userRoutes';
+import appointmentRoutes from "./routes/appointmentRoutes";
 import referralRoutes from './routes/referralRoutes';
 import serviceRoutes from './routes/serviceRoutes';
 import notificationRoutes from './routes/notificationRoutes';
@@ -31,6 +32,7 @@ server.use(express.json());
 server.use(loggerMiddleware);
 server.use(clerkMiddleware());
 // Routes
+server.use("/api/appointments", appointmentRoutes);
 server.use('/api/users', userRoutes);
 server.use('/api/referrals', referralRoutes);
 server.use('/api/services', serviceRoutes);

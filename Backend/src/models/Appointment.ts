@@ -56,9 +56,8 @@ const AppointmentSchema: Schema = new Schema(
       required: true
     },
     employeeId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+    type: String,
+    required: true
     },
     
     // Scheduling
