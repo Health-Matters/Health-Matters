@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { getAuth } from '@clerk/express';
 import Notification from '../models/Notification';
-import Appointment from '../models/Appointment';
 import { User } from '../models/User';
+import { getNotificationsQuerySchema, notificationIdParamsSchema } from '../Dtos/notification.dto';
 
 export const getNotificationsForCurrentUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -11,54 +11,25 @@ export const getNotificationsForCurrentUser = async (req: Request, res: Response
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    // Find the user record so we can resolve the Mongo _id
     const user = await User.findOne({ clerkUserId: auth.userId });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    let notifications = await Notification.find({ recipientId: user._id })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    // Ensure completed appointments are surfaced as notifications (if not already created)
-    const completedAppointments = await Appointment.find({
-      employeeId: user._id,
-      status: 'completed',
-    }).populate('practitionerId', 'firstName lastName');
-
-    for (const appointment of completedAppointments) {
-      const existing = await Notification.findOne({
-        recipientId: user._id,
-        relatedEntityType: 'appointment',
-        relatedEntityId: appointment._id,
-        type: 'appointment_completed',
-      });
-
-      if (!existing) {
-        const practitionerName = appointment.practitionerId
-          ? `${(appointment.practitionerId as any).firstName || ''} ${(appointment.practitionerId as any).lastName || ''}`.trim()
-          : 'your practitioner';
-
-        await Notification.create({
-          recipientId: user._id,
-          type: 'appointment_completed',
-          title: `Appointment completed with ${practitionerName}`,
-          message: `Your appointment with ${practitionerName} has been completed. You can review your follow-up actions in the dashboard.`,
-          relatedEntityType: 'appointment',
-          relatedEntityId: appointment._id,
-          channels: {
-            email: { sent: false },
-            sms: { sent: false },
-            inApp: { read: false },
-          },
-          priority: 'medium',
-        });
-      }
+    const query = getNotificationsQuerySchema.safeParse(req.query);
+    if (!query.success) {
+      return res.status(400).json({ message: 'Invalid query parameters', errors: query.error.flatten() });
     }
 
-    notifications = await Notification.find({ recipientId: user._id })
+    const { unread, type, limit } = query.data;
+
+    const filter: Record<string, unknown> = { recipientId: user._id };
+    if (unread === true) filter['channels.inApp.read'] = false;
+    if (type) filter['type'] = type;
+
+    const notifications = await Notification.find(filter)
       .sort({ createdAt: -1 })
+      .limit(limit ?? 50)
       .lean();
 
     res.status(200).json(notifications);
@@ -74,13 +45,17 @@ export const markNotificationRead = async (req: Request, res: Response, next: Ne
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const { notificationId } = req.params;
+    const params = notificationIdParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      return res.status(400).json({ message: 'Invalid notification ID', errors: params.error.flatten() });
+    }
+
     const user = await User.findOne({ clerkUserId: auth.userId });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const notification = await Notification.findOne({ _id: notificationId, recipientId: user._id });
+    const notification = await Notification.findOne({ _id: params.data.notificationId, recipientId: user._id });
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }

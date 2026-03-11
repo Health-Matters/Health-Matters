@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { CheckCheck, CalendarDays, UserRoundCheck, X, BellRing, FileText, CheckCircle2 } from 'lucide-react';
-import { useGetNotificationsQuery, useMarkNotificationReadMutation } from '../../../store/api';
+import React, { useMemo, useState } from "react";
+import { CheckCheck, CalendarDays, UserRoundCheck, X, BellRing, FileText, CheckCircle2 } from "lucide-react";
+import { useGetNotificationsQuery, useMarkNotificationReadMutation } from "../../../store/api";
 
 const formatDateGroup = (dateString) => {
   const date = new Date(dateString);
@@ -13,37 +13,37 @@ const formatDateGroup = (dateString) => {
     d1.getMonth() === d2.getMonth() &&
     d1.getDate() === d2.getDate();
 
-  if (isSameDay(date, today)) return 'Today';
-  if (isSameDay(date, yesterday)) return 'Yesterday';
-  return 'Earlier';
+  if (isSameDay(date, today)) return "Today";
+  if (isSameDay(date, yesterday)) return "Yesterday";
+  return "Earlier";
 };
 
 const formatDisplayDate = (dateString) => {
   const date = new Date(dateString);
   return date.toLocaleString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 };
 
 const getIcon = (type) => {
   switch (type) {
-    case 'referral_assigned':
-    case 'referral_submitted':
+    case "referral_assigned":
+    case "referral_submitted":
       return <BellRing className="text-sky-500" size={18} />;
-    case 'appointment_scheduled':
-    case 'appointment_reminder_24h':
-    case 'appointment_reminder_1h':
+    case "appointment_scheduled":
+    case "appointment_reminder_24h":
+    case "appointment_reminder_1h":
       return <CalendarDays className="text-orange-400" size={18} />;
-    case 'appointment_cancelled':
+    case "appointment_cancelled":
       return <X className="text-red-500" size={18} />;
-    case 'outcome_report_ready':
-    case 'follow_up_required':
+    case "outcome_report_ready":
+    case "follow_up_required":
       return <FileText className="text-purple-500" size={18} />;
-    case 'appointment_completed':
+    case "appointment_completed":
       return <CheckCircle2 className="text-emerald-500" size={18} />;
     default:
       return <UserRoundCheck className="text-slate-500" size={18} />;
@@ -51,26 +51,12 @@ const getIcon = (type) => {
 };
 
 export const Notifications = () => {
-  const [filter, setFilter] = useState('all'); // 'all' or 'unread'
+  const [filter, setFilter] = useState("all"); // 'all' or 'unread'
   const [selectedNote, setSelectedNote] = useState(null);
-  const { data: notifications = [], isLoading, isError } = useGetNotificationsQuery();
+  const { data, isLoading, isError } = useGetNotificationsQuery();
   const [markRead] = useMarkNotificationReadMutation();
 
-  if (isLoading) {
-    return (
-      <div className="m-6 text-slate-700">
-        <p className="text-lg font-semibold">Loading notifications…</p>
-      </div>
-    );
-  }
-
-  if (isError) {
-    return (
-      <div className="m-6 text-red-600">
-        <p className="text-lg font-semibold">Unable to load notifications. Please try again later.</p>
-      </div>
-    );
-  }
+  const notifications = data ?? [];
 
   const enrichedNotifications = useMemo(() => {
     return (notifications || []).map((notification) => {
@@ -88,8 +74,10 @@ export const Notifications = () => {
   }, [notifications]);
 
   const filteredNotifications = useMemo(() => {
-    return enrichedNotifications.filter((n) => (filter === 'all' ? true : n.unread));
+    return enrichedNotifications.filter((n) => (filter === "all" ? true : n.unread));
   }, [enrichedNotifications, filter]);
+
+  const unreadCount = enrichedNotifications.filter((n) => n.unread).length;
 
   const markAllAsRead = async () => {
     await Promise.all(
@@ -99,73 +87,100 @@ export const Notifications = () => {
     );
   };
 
+  const hasNotifications = filteredNotifications.length > 0;
+  const showEmptyState = !isLoading && !hasNotifications;
+
   return (
-    <div style={{ fontFamily: 'Arial, sans-serif' }}>
-      
+    <div style={{ fontFamily: "Arial, sans-serif" }}>
+      {isError && (
+        <div className="m-6 rounded-3xl border border-red-100 bg-red-50 p-6 text-red-700">
+          <p className="text-sm font-semibold">
+            Unable to load notifications. Showing available data. Please try again later.
+          </p>
+        </div>
+      )}
+
+      {isLoading && (
+        <div className="m-6 text-slate-700">
+          <p className="text-lg font-semibold">Loading notifications…</p>
+        </div>
+      )}
+
       <div className="flex-1 m-2 flex gap-4 overflow-hidden">
-        
         {/* LEFT SIDE: Notification List */}
-        <div className={`flex flex-col transition-all duration-300 ${selectedNote ? 'w-[40%]' : 'w-full'}`}>
+        <div className={`flex flex-col transition-all duration-300 ${selectedNote ? "w-[40%]" : "w-full"}`}>
           <div>
             <h1 className="text-3xl font-bold text-[#001F3F]">Notifications</h1>
           </div>
 
           <div className="flex justify-between items-center mb-4 px-1 border-b border-green-200 flex-shrink-0">
             <div className="flex gap-8 text-slate-500 text-sm font-bold pb-2">
-              <span 
-                onClick={() => setFilter('all')}
-                className={`cursor-pointer transition-all ${filter === 'all' ? 'border-b-2 border-slate-900 text-slate-900' : 'text-slate-400'}`}
+              <span
+                onClick={() => setFilter("all")}
+                className={`cursor-pointer transition-all ${filter === "all" ? "border-b-2 border-slate-900 text-slate-900" : "text-slate-400"}`}
               >
                 All
               </span>
-              <span 
-                onClick={() => setFilter('unread')}
-                className={`cursor-pointer transition-all ${filter === 'unread' ? 'border-b-2 border-slate-900 text-slate-900' : 'text-slate-400'}`}
+              <span
+                onClick={() => setFilter("unread")}
+                className={`cursor-pointer transition-all ${filter === "unread" ? "border-b-2 border-slate-900 text-slate-900" : "text-slate-400"}`}
               >
-                Unread ({enrichedNotifications.filter(n => n.unread).length})
+                Unread ({unreadCount})
               </span>
             </div>
-            <button onClick={markAllAsRead} className="text-slate-700 text-xs font-bold flex items-center gap-1">
+            <button
+              onClick={markAllAsRead}
+              disabled={!unreadCount}
+              className="text-slate-700 text-xs font-bold flex items-center gap-1 disabled:opacity-40"
+            >
               <CheckCheck size={16} /> Mark all as read
             </button>
           </div>
 
           <div className="flex-1 overflow-y-auto pr-2">
-            {['Today', 'Yesterday', 'Earlier'].map((group) => {
-              const groupNotes = filteredNotifications.filter(n => n.group === group);
-              
-              // Only show the group header if there are notes in that group after filtering
-              if (groupNotes.length === 0) return null;
+            {showEmptyState ? (
+              <div className="p-8 text-center text-slate-500">
+                <p className="text-lg font-semibold">No notifications yet.</p>
+                <p className="mt-2 text-sm">You’ll see updates here when new notifications arrive.</p>
+              </div>
+            ) : (
+              ["Today", "Yesterday", "Earlier"].map((group) => {
+                const groupNotes = filteredNotifications.filter((n) => n.group === group);
 
-              return (
-                <div key={group} className="mb-6">
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 ml-1">{group}</h3>
-                  <div className="space-y-3">
-                    {groupNotes.map((note) => (
-                      <div 
-                        key={note.id} 
-                        onClick={() => { 
-                          markRead(note.id).catch(() => null);
-                          setSelectedNote({ ...note, unread: false });
-                        }}
-                        className={`cursor-pointer rounded-2xl flex items-center justify-between p-4 shadow-sm border transition-all ${
-                          selectedNote?.id === note.id ? 'bg-blue-50 border-blue-200' : 'bg-white border-slate-100 hover:border-slate-300'
-                        }`}
-                      >
-                        <div className="flex items-center gap-4 truncate">
-                          <div className="flex-shrink-0">{getIcon(note.type)}</div>
-                          <div className="truncate">
-                            <p className={`text-slate-800 text-sm truncate ${note.unread ? 'font-bold' : ''}`}>{note.title}</p>
-                            <p className="text-slate-400 text-[10px] mt-1 font-bold">{note.date}</p>
+                if (groupNotes.length === 0) return null;
+
+                return (
+                  <div key={group} className="mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 ml-1">{group}</h3>
+                    <div className="space-y-3">
+                      {groupNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          onClick={() => {
+                            markRead(note.id).catch(() => null);
+                            setSelectedNote({ ...note, unread: false });
+                          }}
+                          className={`cursor-pointer rounded-2xl flex items-center justify-between p-4 shadow-sm border transition-all ${
+                            selectedNote?.id === note.id
+                              ? "bg-blue-50 border-blue-200"
+                              : "bg-white border-slate-100 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="flex items-center gap-4 truncate">
+                            <div className="flex-shrink-0">{getIcon(note.type)}</div>
+                            <div className="truncate">
+                              <p className={`text-slate-800 text-sm truncate ${note.unread ? "font-bold" : ""}`}>{note.title}</p>
+                              <p className="text-slate-400 text-[10px] mt-1 font-bold">{note.date}</p>
+                            </div>
                           </div>
+                          {note.unread && <div className="w-2.5 h-2.5 bg-sky-400 rounded-full flex-shrink-0 ml-4"></div>}
                         </div>
-                        {note.unread && <div className="w-2.5 h-2.5 bg-sky-400 rounded-full flex-shrink-0 ml-4"></div>}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -181,7 +196,7 @@ export const Notifications = () => {
                 <X size={20} />
               </button>
             </div>
-            
+
             <div className="p-8 overflow-y-auto flex-1">
               <p className="text-xs text-slate-400 font-bold uppercase mb-2">{selectedNote.date}</p>
               <h3 className="text-xl font-bold text-slate-900 mb-6">{selectedNote.title}</h3>
