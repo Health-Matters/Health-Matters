@@ -5,6 +5,7 @@ import userRoutes from './routes/userRoutes';
 import { loggerMiddleware } from './middlewares/logger-middleware';
 import { clerkMiddleware } from '@clerk/express';
 import webHooksRouter from './middlewares/webhooks/webhooks';
+import referralRoutes from "./routes/referralRoutes";
 // Load env vars before using them
 dotenv.config(); 
 
@@ -17,6 +18,7 @@ server.use(express.json());
 server.use(loggerMiddleware);
 // Routes
 server.use('/api/users', userRoutes);
+server.use("/api/referrals", referralRoutes);
 // Connect to Database
 connectDB();
 // Start Server
