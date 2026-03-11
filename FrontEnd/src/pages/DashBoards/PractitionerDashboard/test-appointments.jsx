@@ -11,7 +11,7 @@ function formatDateKey(date) {
   return date.toISOString().split("T")[0];
 }
 
-const DUMMY_APPOINTMENTS = {
+const INITIAL_APPOINTMENTS = {
   "2026-03-08": [
     { id: 1, patient: "John Doe", patientId: "P-1001", serviceType: "Physiotherapy", startTime: "08:30", endTime: "09:15" },
     { id: 2, patient: "Jane Smith", patientId: "P-1002", serviceType: "Dental", startTime: "09:30", endTime: "10:00" },
@@ -45,9 +45,10 @@ function addDays(date, days) {
 export const PractitionerTestAppointments = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [appointments, setAppointments] = useState(INITIAL_APPOINTMENTS);
 
   const dateKey = formatDateKey(selectedDate);
-  const appointmentsForDate = DUMMY_APPOINTMENTS[dateKey] || [];
+  const appointmentsForDate = appointments[dateKey] || [];
 
   const appointmentsByStartTime = {};
   appointmentsForDate.forEach((appt) => {
@@ -58,10 +59,18 @@ export const PractitionerTestAppointments = () => {
   const handleNextDay = () => setSelectedDate((prev) => addDays(prev, 1));
   const handleToday = () => setSelectedDate(new Date());
 
-  // Collect all appointments for a given patient across all dates
+  const handleCancelAppointment = (id) => {
+    setAppointments((prev) => {
+      const updated = { ...prev };
+      updated[dateKey] = updated[dateKey].filter((appt) => appt.id !== id);
+      return updated;
+    });
+    alert("Appointment cancelled successfully.");
+  };
+
   const getAppointmentsForPatient = (patientId) => {
     const allAppointments = [];
-    Object.entries(DUMMY_APPOINTMENTS).forEach(([date, appts]) => {
+    Object.entries(appointments).forEach(([date, appts]) => {
       appts.forEach((a) => {
         if (a.patientId === patientId) {
           allAppointments.push({ ...a, date });
@@ -95,14 +104,22 @@ export const PractitionerTestAppointments = () => {
                 {!appt ? (
                   <span className="italic text-gray-400">No appointments</span>
                 ) : (
-                  <button
-                    onClick={() => setSelectedPatient(appt)}
-                    className="w-full text-left p-2 bg-blue-100 rounded text-blue-800 hover:bg-blue-200"
-                  >
-                    <div><strong>{appt.patient}</strong> <span className="text-xs text-gray-500">({appt.patientId})</span></div>
-                    <div className="text-xs italic text-gray-600">{appt.serviceType}</div>
-                    <div className="text-xs text-gray-600">{appt.startTime} - {appt.endTime}</div>
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={() => setSelectedPatient(appt)}
+                      className="flex-1 text-left p-2 bg-blue-100 rounded text-blue-800 hover:bg-blue-200 mr-2"
+                    >
+                      <div><strong>{appt.patient}</strong> <span className="text-xs text-gray-500">({appt.patientId})</span></div>
+                      <div className="text-xs italic text-gray-600">{appt.serviceType}</div>
+                      <div className="text-xs text-gray-600">{appt.startTime} - {appt.endTime}</div>
+                    </button>
+                    <button
+                      onClick={() => handleCancelAppointment(appt.id)}
+                      className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
