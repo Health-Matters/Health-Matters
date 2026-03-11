@@ -80,6 +80,34 @@ export const createReferral = async (req: Request, res: Response, next: NextFunc
 
 		const newReferral = await Referral.create(parsedBody.data);
 
+		// Create an in-app notification confirming the referral submission
+		try {
+			const patient = await User.findOne({ clerkUserId: newReferral.patientClerkUserId });
+
+			if (patient) {
+				const service = newReferral.serviceType ?? 'a service';
+				const referralId = `#${String(newReferral._id).slice(-6).toUpperCase()}`;
+
+				await Notification.create({
+					recipientId: patient._id,
+					type: 'referral_submitted',
+					title: `Referral Submitted — ${newReferral.serviceType ?? 'Service'}`,
+					message: `You have successfully submitted a referral ${referralId} for ${service}. It is currently pending review by our team.\n\nReason for referral: ${newReferral.referralReason ?? 'Not provided'}.`,
+					relatedEntityType: 'referral',
+					relatedEntityId: newReferral._id,
+					channels: {
+						email: { sent: false },
+						sms: { sent: false },
+						inApp: { read: false },
+					},
+					priority: 'medium',
+				});
+			}
+		} catch (notificationError) {
+			// Non-fatal — log but don't block the referral response
+			console.error('Failed to create referral submission notification:', notificationError);
+		}
+
 		res.status(201).json(newReferral);
 	} catch (error) {
 		next(error);
@@ -194,7 +222,10 @@ export const assignReferralById = async (req: Request, res: Response, next: Next
 			const practitioner = await User.findOne({ clerkUserId: practitionerClerkUserId });
 
 			if (patient) {
-				const practitionerName = practitioner ? `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim() : 'your practitioner';
+				const practitionerName = practitioner
+					? `${practitioner.firstName || ''} ${practitioner.lastName || ''}`.trim()
+					: 'your practitioner';
+
 				await Notification.create({
 					recipientId: patient._id,
 					type: 'referral_assigned',

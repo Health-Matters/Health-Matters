@@ -31,9 +31,11 @@ const formatDisplayDate = (dateString) => {
 
 const getIcon = (type) => {
   switch (type) {
-    case "referral_assigned":
     case "referral_submitted":
+    case "referral_triaged":
       return <BellRing className="text-sky-500" size={18} />;
+    case "referral_assigned":
+      return <CheckCircle2 className="text-emerald-500" size={18} />;
     case "appointment_scheduled":
     case "appointment_reminder_24h":
     case "appointment_reminder_1h":
@@ -52,12 +54,15 @@ const getIcon = (type) => {
 
 export const Notifications = () => {
   const [selectedNote, setSelectedNote] = useState(null);
-  const { data, isLoading, isError } = useGetNotificationsQuery();
+
+  const { data, isLoading, isError } = useGetNotificationsQuery(undefined, {
+    pollingInterval: 10000,
+  });
 
   const notifications = data ?? [];
 
   const enrichedNotifications = useMemo(() => {
-    return (notifications || []).map((notification) => {
+    return notifications.map((notification) => {
       const date = notification.createdAt || notification.updatedAt || new Date().toISOString();
       return {
         id: notification._id,
@@ -66,14 +71,14 @@ export const Notifications = () => {
         date: formatDisplayDate(date),
         group: formatDateGroup(date),
         type: notification.type,
+        unread: notification.channels?.inApp?.read === false,
       };
     });
   }, [notifications]);
 
-  const filteredNotifications = useMemo(() => enrichedNotifications, [enrichedNotifications]);
-
-  const hasNotifications = filteredNotifications.length > 0;
+  const hasNotifications = enrichedNotifications.length > 0;
   const showEmptyState = !isLoading && !hasNotifications;
+  const unreadCount = enrichedNotifications.filter((n) => n.unread).length;
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif" }}>
@@ -92,10 +97,16 @@ export const Notifications = () => {
       )}
 
       <div className="flex-1 m-2 flex gap-4 overflow-hidden">
+
         {/* LEFT SIDE: Notification List */}
         <div className={`flex flex-col transition-all duration-300 ${selectedNote ? "w-[40%]" : "w-full"}`}>
-          <div>
+          <div className="flex items-center gap-3 mb-1">
             <h1 className="text-3xl font-bold text-[#001F3F]">Notifications</h1>
+            {unreadCount > 0 && (
+              <span className="bg-emerald-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                {unreadCount} new
+              </span>
+            )}
           </div>
 
           <div className="flex justify-between items-center mb-4 px-1 border-b border-green-200 flex-shrink-0">
@@ -108,12 +119,11 @@ export const Notifications = () => {
             {showEmptyState ? (
               <div className="p-8 text-center text-slate-500">
                 <p className="text-lg font-semibold">No notifications yet.</p>
-                <p className="mt-2 text-sm">You’ll see updates here when new notifications arrive.</p>
+                <p className="mt-2 text-sm">You'll see updates here when new notifications arrive.</p>
               </div>
             ) : (
               ["Today", "Yesterday", "Earlier"].map((group) => {
-                const groupNotes = filteredNotifications.filter((n) => n.group === group);
-
+                const groupNotes = enrichedNotifications.filter((n) => n.group === group);
                 if (groupNotes.length === 0) return null;
 
                 return (
@@ -123,19 +133,26 @@ export const Notifications = () => {
                       {groupNotes.map((note) => (
                         <div
                           key={note.id}
-                          onClick={() => {
-                            setSelectedNote(note);
-                          }}
+                          onClick={() => setSelectedNote(note)}
                           className={`cursor-pointer rounded-2xl flex items-center justify-between p-4 shadow-sm border transition-all ${
                             selectedNote?.id === note.id
                               ? "bg-blue-50 border-blue-200"
+                              : note.unread
+                              ? "bg-emerald-50/60 border-emerald-100 hover:border-emerald-300"
                               : "bg-white border-slate-100 hover:border-slate-300"
                           }`}
                         >
                           <div className="flex items-center gap-4 truncate">
-                            <div className="flex-shrink-0">{getIcon(note.type)}</div>
+                            <div className="flex-shrink-0 relative">
+                              {getIcon(note.type)}
+                              {note.unread && (
+                                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500" />
+                              )}
+                            </div>
                             <div className="truncate">
-                              <p className="text-slate-800 text-sm truncate font-medium">{note.title}</p>
+                              <p className={`text-sm truncate ${note.unread ? "font-bold text-slate-900" : "font-medium text-slate-800"}`}>
+                                {note.title}
+                              </p>
                               <p className="text-slate-400 text-[10px] mt-1 font-bold">{note.date}</p>
                             </div>
                           </div>
@@ -165,7 +182,7 @@ export const Notifications = () => {
             <div className="p-8 overflow-y-auto flex-1">
               <p className="text-xs text-slate-400 font-bold uppercase mb-2">{selectedNote.date}</p>
               <h3 className="text-xl font-bold text-slate-900 mb-6">{selectedNote.title}</h3>
-              <div className="bg-[#F8FAFC] p-6 rounded-xl border border-slate-100 text-slate-700 leading-relaxed">
+              <div className="bg-[#F8FAFC] p-6 rounded-xl border border-slate-100 text-slate-700 leading-relaxed whitespace-pre-line">
                 {selectedNote.message}
               </div>
             </div>
