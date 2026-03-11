@@ -54,6 +54,8 @@ const getIcon = (type) => {
 
 export const Notifications = () => {
   const [selectedNote, setSelectedNote] = useState(null);
+  // Track IDs opened this session — once opened, dot disappears
+  const [readIds, setReadIds] = useState(new Set());
 
   const { data, isLoading, isError } = useGetNotificationsQuery(undefined, {
     pollingInterval: 10000,
@@ -64,6 +66,10 @@ export const Notifications = () => {
   const enrichedNotifications = useMemo(() => {
     return notifications.map((notification) => {
       const date = notification.createdAt || notification.updatedAt || new Date().toISOString();
+      // Unread if backend says unread AND user hasn't opened it this session
+      const isUnread =
+        notification.channels?.inApp?.read === false &&
+        !readIds.has(notification._id);
       return {
         id: notification._id,
         title: notification.title,
@@ -71,14 +77,22 @@ export const Notifications = () => {
         date: formatDisplayDate(date),
         group: formatDateGroup(date),
         type: notification.type,
-        unread: notification.channels?.inApp?.read === false,
+        unread: isUnread,
       };
     });
-  }, [notifications]);
+  }, [notifications, readIds]);
 
   const hasNotifications = enrichedNotifications.length > 0;
   const showEmptyState = !isLoading && !hasNotifications;
   const unreadCount = enrichedNotifications.filter((n) => n.unread).length;
+
+  const handleSelect = (note) => {
+    setSelectedNote(note);
+    // Mark as read locally so the dot disappears immediately
+    if (note.unread) {
+      setReadIds((prev) => new Set([...prev, note.id]));
+    }
+  };
 
   return (
     <div style={{ fontFamily: "Arial, sans-serif" }}>
@@ -133,7 +147,7 @@ export const Notifications = () => {
                       {groupNotes.map((note) => (
                         <div
                           key={note.id}
-                          onClick={() => setSelectedNote(note)}
+                          onClick={() => handleSelect(note)}
                           className={`cursor-pointer rounded-2xl flex items-center justify-between p-4 shadow-sm border transition-all ${
                             selectedNote?.id === note.id
                               ? "bg-blue-50 border-blue-200"
@@ -145,8 +159,9 @@ export const Notifications = () => {
                           <div className="flex items-center gap-4 truncate">
                             <div className="flex-shrink-0 relative">
                               {getIcon(note.type)}
+                              {/* Green dot — only shown on unread notifications */}
                               {note.unread && (
-                                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-500" />
+                                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
                               )}
                             </div>
                             <div className="truncate">
