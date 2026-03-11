@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
 import { useGetReferralsByPatientIdQuery } from "../../../store/api/referralsApi";
 import { useGetAppointmentsByEmployeeIdQuery } from "../../../store/api/appointmentsApi";
+import { useGetAdviceSheetAccessCountByEmployeeIdQuery } from "../../../store/api/medicalRecordsApi";
 
 import {
   Clock,
@@ -9,6 +10,8 @@ import {
   PlusCircle,
   User,
   ClipboardList,
+  CalendarDays,
+  BookOpen,
   Calendar as CalendarIcon
 } from "lucide-react";
 
@@ -40,6 +43,49 @@ export const EmployeeOverview = () => {
     skip: !patientId
   });
 
+  const {
+    data: accessCountResponse = { accessCount: 0 },
+    isLoading: isAdviceLoading,
+    isError: isAdviceError
+  } = useGetAdviceSheetAccessCountByEmployeeIdQuery(patientId, {
+    skip: !patientId
+  });
+
+  const adviceCount = accessCountResponse?.accessCount ?? 0;
+
+  const now = new Date();
+
+  const upcomingAppointments = appointments
+    .filter((app) => {
+      const scheduled = new Date(app.scheduledDate);
+      return (
+        scheduled >= now &&
+        ["scheduled", "confirmed", "in_progress"].includes(app.status)
+      );
+    })
+    .sort((a, b) => new Date(a.scheduledDate) - new Date(b.scheduledDate));
+
+  const upcomingCount = upcomingAppointments.length;
+  const nextAppointment = upcomingAppointments[0];
+
+  const daysUntilNext = nextAppointment
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(nextAppointment.scheduledDate) - now) /
+            (1000 * 60 * 60 * 24)
+        )
+      )
+    : null;
+
+  const nextAppointmentLabel = nextAppointment
+    ? daysUntilNext === 0
+      ? "Today"
+      : daysUntilNext === 1
+      ? "Tomorrow"
+      : `Next in ${daysUntilNext} days`
+    : "No upcoming appointments";
+
   const totalReferrals = referrals.length;
 
   const pendingReferrals = referrals.filter(
@@ -62,9 +108,12 @@ export const EmployeeOverview = () => {
         })
       : "—";
 
-  if (isLoading) return <div className="p-10">Loading dashboard...</div>;
+  const isAnyLoading = isLoading || isAdviceLoading;
+  const isAnyError = isError || isAdviceError;
 
-  if (isError)
+  if (isAnyLoading) return <div className="p-10">Loading dashboard...</div>;
+
+  if (isAnyError)
     return (
       <div className="p-10 text-red-500">
         Failed to load dashboard
@@ -108,6 +157,23 @@ export const EmployeeOverview = () => {
           iconColor="text-blue-600"
         />
 
+        <StatCard
+          title="Upcoming Appointments"
+          value={upcomingCount}
+          subtext={nextAppointmentLabel}
+          icon={CalendarDays}
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+        />
+
+        <StatCard
+          title="Advice Sheets Accessed"
+          value={adviceCount}
+          subtext="This month"
+          icon={BookOpen}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+        />
       </div>
 
       {/* REFERRAL HISTORY */}

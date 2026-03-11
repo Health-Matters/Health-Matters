@@ -18,7 +18,15 @@ import { useGetMeQuery } from "../../../store/api";
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const displayValue = (value) => (value && String(value).trim() ? value : "—");
+const truncate = (value, max = 20) => {
+  const str = String(value ?? "");
+  return str.length > max ? `${str.slice(0, max)}...` : str;
+};
+
+const displayValue = (value) => {
+  const text = value && String(value).trim() ? String(value).trim() : "";
+  return text ? truncate(text, 20) : "—";
+};
 
 const DisplayField = ({ label, value }) => (
   <div>
@@ -163,7 +171,7 @@ export const EmployeeProfile = () => {
             {profile.email && (
               <div className="mt-6 w-full bg-gray-50 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-slate-600">
                 <ShieldCheck size={16} className="text-[#064E3B] shrink-0" />
-                <span className="truncate font-medium">{profile.email}</span>
+                <span className="truncate font-medium">{truncate(profile.email)}</span>
               </div>
             )}
             {profile.phone && (
