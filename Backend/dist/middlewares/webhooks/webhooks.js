@@ -4,70 +4,48 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const svix_1 = require("svix");
-const User_1 = require("./../../models/User"); // Check this path matches your file structure
+const webhooks_1 = require("@clerk/express/webhooks");
+const User_1 = require("./../../models/User");
 const webhooksRouter = express_1.default.Router();
-webhooksRouter.post("/clerk", 
-// 1. Force Raw Body for verification (Standard for Clerk)
-express_1.default.raw({ type: "application/json" }), async (req, res, next) => {
+webhooksRouter.post("/clerk", express_1.default.raw({ type: "application/json" }), async (req, res) => {
     try {
-        const payloadString = req.body.toString();
-        const svixHeaders = req.headers;
-        // 2. Load Secret
-        if (!process.env.CLERK_WEBHOOK_SIGNING_SECRET) {
-            throw new Error("Missing CLERK_WEBHOOK_SECRET in .env");
-        }
-        const wh = new svix_1.Webhook(process.env.CLERK_WEBHOOK_SIGNING_SECRET);
-        // 3. Verify Signature (Safely)
-        // This returns the JSON object if valid, or throws an error if not
-        const evt = wh.verify(payloadString, svixHeaders);
-        // Log for debugging
+        const evt = await (0, webhooks_1.verifyWebhook)(req);
+        // Do something with payload
+        // For this guide, log payload to console
+        const { id } = evt.data;
         const eventType = evt.type;
-        console.log(`✅ Webhook verified: ${eventType}`);
-        // 4. Handle 'user.created'
+        console.log(`Received webhook with ID ${id} and event type of ${eventType}`);
+        console.log("Webhook payload:", evt.data);
         if (eventType === "user.created") {
-            const { id, email_addresses, username, first_name, last_name } = evt.data;
-            // Safety: Extract email and generate username fallback if needed
-            const email = email_addresses[0]?.email_address;
-            if (!email) {
-                return res.status(400).json({ success: false, message: "Missing user email" });
-            }
-            const finalUsername = username || email.split('@')[0];
-            // Check for duplicates before creating
-            const existingUser = await User_1.User.findOne({ clerkUserId: id });
-            if (existingUser) {
-                console.log("User already exists, skipping.");
-                return res.status(200).json({ success: true });
+            const { id } = evt.data;
+            const user = await User_1.User.findOne({ clerkUserId: id });
+            if (user) {
+                console.log("User already exists");
+                return;
             }
             await User_1.User.create({
-                clerkUserId: id, // Ensure this matches your DB Schema (clerkId vs clerkUserId)
-                email: email,
-                userName: finalUsername,
-                firstName: first_name,
-                lastName: last_name,
+                userName: evt.data.username,
+                firstName: evt.data.first_name,
+                lastName: evt.data.last_name,
+                email: evt.data.email_addresses[0].email_address,
+                clerkUserId: id,
             });
-            console.log(`User ${finalUsername} created!`);
         }
-        // 5. Handle 'user.updated' (FIXED SYNTAX)
         if (eventType === "user.updated") {
-            const { id, public_metadata } = evt.data;
-            await User_1.User.findOneAndUpdate({ clerkUserId: id }, // Filter
-            { role: public_metadata?.role }, // Update Data
-            { new: true } // Options
-            );
-            console.log(`User ${id} updated`);
+            const { id } = evt.data;
+            const user = await User_1.User.findOneAndUpdate({ clerkUserId: id });
+            role: evt.data.public_metadata?.role;
         }
-        // 6. Handle 'user.deleted'
         if (eventType === "user.deleted") {
             const { id } = evt.data;
             await User_1.User.findOneAndDelete({ clerkUserId: id });
-            console.log(`User ${id} deleted`);
         }
-        return res.status(200).json({ success: true });
+        // Modify User entity and fix errors as needed for other event types
+        return res.send("Webhook received");
     }
-    catch (error) {
-        console.error("❌ Error verifying webhook:", error);
-        next(error); // Pass to global error handler
+    catch (err) {
+        console.error("Error verifying webhook:", err);
+        return res.status(400).send("Error verifying webhook");
     }
 });
 exports.default = webhooksRouter;
