@@ -22,7 +22,9 @@ const STATUS_CONFIG = {
   pending:     { label: "Pending",     style: "bg-amber-100 text-amber-700"  },
   accepted:    { label: "Accepted",    style: "bg-blue-100 text-blue-700"    },
   rejected:    { label: "Rejected",    style: "bg-red-100 text-red-700"      },
-
+  in_progress: { label: "In Progress", style: "bg-blue-100 text-blue-700"    },
+  completed:   { label: "Completed",   style: "bg-green-100 text-green-700"  },
+  cancelled:   { label: "Cancelled",   style: "bg-slate-100 text-slate-500"  },
 };
 
 const StatusBadge = ({ status }) => {
@@ -359,7 +361,6 @@ export const ManagerReferralSubmission = () => {
   const [submitted, setSubmitted]       = useState(false);
   const [submittedRef, setSubmittedRef] = useState(null);
 
-  const { user } = useUser();
   const [createReferral, { isLoading: submitting }] = useCreateReferralMutation();
   const { data: teamMembers = [], isLoading: teamLoading } = useGetUsersQuery({ role: "employee" });
   const selectedMember = teamMembers.find((m) => m.clerkUserId === form.patientClerkUserId);
@@ -391,12 +392,12 @@ export const ManagerReferralSubmission = () => {
       form.additionalInfo        ? `Additional Info: ${form.additionalInfo}` : null,
     ].filter(Boolean).join("\n\n");
     try {
+      // SECURITY: submittedByClerkUserId is NOT sent — set server-side from Clerk token
       const result = await createReferral({
-        patientClerkUserId:     form.patientClerkUserId,
-        submittedByClerkUserId: user?.id,
-        serviceType:            form.serviceType,
-        referralReason:         form.referralReason,
-        notes:                  combinedNotes || undefined,
+        patientClerkUserId: form.patientClerkUserId,
+        serviceType:        form.serviceType,
+        referralReason:     form.referralReason,
+        notes:              combinedNotes || undefined,
       }).unwrap();
       setSubmittedRef(result);
       setSubmitted(true);
@@ -565,7 +566,7 @@ export const ManagerReferralSubmission = () => {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TEAM PAGE
+// TEAM PAGE (simple card view — full health data version is in test-team.jsx)
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ROLE_COLORS = {

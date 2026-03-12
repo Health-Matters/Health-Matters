@@ -3,11 +3,22 @@ import { baseApi } from './baseApi';
 export const referralsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
 
-    // ── Core referral endpoints ────────────────────────────────────────────
-
     // GET /api/referrals
     getReferrals: builder.query({
       query: () => '/referrals',
+      providesTags: ['Referrals'],
+    }),
+
+    // GET /api/referrals/my-submissions
+    // MGR-005: Returns referrals submitted by the authenticated user.
+    // SECURITY: No ID passed in the request — identity is derived from
+    // the Clerk token on the backend. Never pass a managerId here.
+    // Optional params: { status, serviceType, search, dateFrom, dateTo, page, limit }
+    getMyReferrals: builder.query({
+      query: (params = {}) => ({
+        url: '/referrals/my-submissions',
+        params,
+      }),
       providesTags: ['Referrals'],
     }),
 
@@ -23,17 +34,6 @@ export const referralsApi = baseApi.injectEndpoints({
       providesTags: ['Referrals'],
     }),
 
-    // GET /api/referrals/manager/:managerId
-    // Returns { data: Referral[], pagination: { total, page, limit, totalPages } }
-    // Optional params: { status, serviceType, search, dateFrom, dateTo, page, limit }
-    getReferralsByManagerId: builder.query({
-      query: ({ managerId, ...params }) => ({
-        url: `/referrals/manager/${managerId}`,
-        params,
-      }),
-      providesTags: ['Referrals'],
-    }),
-
     // GET /api/referrals/:referralId
     getReferralById: builder.query({
       query: (referralId) => `/referrals/${referralId}`,
@@ -41,6 +41,8 @@ export const referralsApi = baseApi.injectEndpoints({
     }),
 
     // POST /api/referrals
+    // SECURITY: No submittedByClerkUserId in the body.
+    // It is always set server-side from the Clerk token.
     createReferral: builder.mutation({
       query: (body) => ({
         url: '/referrals',
@@ -85,9 +87,9 @@ export const referralsApi = baseApi.injectEndpoints({
 
 export const {
   useGetReferralsQuery,
+  useGetMyReferralsQuery,
   useGetReferralsByPatientIdQuery,
   useGetReferralsByPractitionerIdQuery,
-  useGetReferralsByManagerIdQuery,
   useGetReferralByIdQuery,
   useCreateReferralMutation,
   useUpdateReferralsByPatientIdMutation,

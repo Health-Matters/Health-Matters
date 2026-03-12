@@ -23,22 +23,22 @@ import {
   useGetReferralsQuery,
   useGetUsersQuery,
 } from "@/store/api";
-
+ 
 const getFullName = (user) => {
   if (!user) return "Unknown";
   const fullName = `${user.firstName || ""} ${user.lastName || ""}`.trim();
   return fullName || user.userName || user.email || "Unknown";
 };
-
+ 
 const formatDate = (value) => {
   if (!value) return "-";
   return new Date(value).toLocaleDateString();
 };
-
+ 
 export const TestFeature = () => {
   const [selectedReferral, setSelectedReferral] = useState(null);
   const [selectedPractitionerId, setSelectedPractitionerId] = useState("");
-
+ 
   const {
     data: referrals = [],
     isLoading: isReferralsLoading,
@@ -46,21 +46,14 @@ export const TestFeature = () => {
     error: referralsError,
     refetch: refetchReferrals,
   } = useGetReferralsQuery();
-
+ 
   const { data: users = [] } = useGetUsersQuery();
   const { data: practitioners = [], isLoading: isPractitionersLoading } = useGetUsersQuery({
     role: "practitioner",
   });
-
+ 
   const [assignReferralById, { isLoading: isAssigning }] = useAssignReferralByIdMutation();
-
-  console.log("Referrals Query State:", {
-    data: referrals,
-    isLoading: isReferralsLoading,
-    isError: isReferralsError,
-    error: referralsError,
-  });
-
+ 
   const usersByClerkId = useMemo(() => {
     const map = new Map();
     users.forEach((user) => {
@@ -70,7 +63,7 @@ export const TestFeature = () => {
     });
     return map;
   }, [users]);
-
+ 
   const practitionersByClerkId = useMemo(() => {
     const map = new Map();
     practitioners.forEach((practitioner) => {
@@ -80,27 +73,27 @@ export const TestFeature = () => {
     });
     return map;
   }, [practitioners]);
-
+ 
   const openReferralDetails = (referral) => {
     setSelectedReferral(referral);
     setSelectedPractitionerId("");
   };
-
+ 
   const closeReferralDetails = () => {
     setSelectedReferral(null);
     setSelectedPractitionerId("");
   };
-
+ 
   const handleAssignPractitioner = async () => {
     if (!selectedReferral?._id || !selectedPractitionerId) return;
-
+ 
     await assignReferralById({
       referralId: selectedReferral._id,
       practitionerClerkUserId: selectedPractitionerId,
     }).unwrap();
-
+ 
     await refetchReferrals();
-
+ 
     const assignedPractitioner = practitionersByClerkId.get(selectedPractitionerId);
     setSelectedReferral((prev) => {
       if (!prev) return prev;
@@ -111,10 +104,10 @@ export const TestFeature = () => {
         assignedPractitionerName: getFullName(assignedPractitioner),
       };
     });
-
+ 
     setSelectedPractitionerId("");
   };
-
+ 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -126,7 +119,7 @@ export const TestFeature = () => {
         </div>
         <Button variant="outline" onClick={refetchReferrals}>Refresh</Button>
       </div>
-
+ 
       <Card>
         <CardHeader>
           <CardTitle>All Referrals</CardTitle>
@@ -187,7 +180,7 @@ export const TestFeature = () => {
                       const patient = usersByClerkId.get(referral.patientClerkUserId);
                       const practitioner = practitionersByClerkId.get(referral.practitionerClerkUserId);
                       const isAssigned = Boolean(referral.practitionerClerkUserId);
-
+ 
                       return (
                         <tr
                           key={referral._id}
@@ -231,7 +224,7 @@ export const TestFeature = () => {
           </div>
         </CardContent>
       </Card>
-
+ 
       <Sheet open={Boolean(selectedReferral)} onOpenChange={(open) => !open && closeReferralDetails()}>
         <SheetContent className="sm:max-w-xl overflow-y-auto bg-white text-slate-900 border-l border-slate-200 shadow-2xl">
           <SheetHeader>
@@ -240,7 +233,7 @@ export const TestFeature = () => {
               Full referral information and assignment controls.
             </SheetDescription>
           </SheetHeader>
-
+ 
           {selectedReferral && (
             <div className="space-y-4 px-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
@@ -249,12 +242,16 @@ export const TestFeature = () => {
                   <p className="font-medium text-slate-900">{selectedReferral._id}</p>
                 </div>
                 <div>
-                  <p className="text-slate-500">Patient ID</p>
-                  <p className="font-medium text-slate-900">{selectedReferral.patientClerkUserId}</p>
+                  <p className="text-slate-500">Patient</p>
+                  <p className="font-medium text-slate-900">
+                    {getFullName(usersByClerkId.get(selectedReferral.patientClerkUserId))}
+                  </p>
                 </div>
                 <div>
                   <p className="text-slate-500">Submitted By</p>
-                  <p className="font-medium text-slate-900">{selectedReferral.submittedByClerkUserId || "-"}</p>
+                  <p className="font-medium text-slate-900">
+                    {getFullName(usersByClerkId.get(selectedReferral.submittedByClerkUserId))}
+                  </p>
                 </div>
                 <div>
                   <p className="text-slate-500">Service Type</p>
@@ -277,17 +274,17 @@ export const TestFeature = () => {
                   <p className="font-medium text-slate-900">{formatDate(selectedReferral.completedDate)}</p>
                 </div>
               </div>
-
+ 
               <div>
                 <p className="text-slate-500 text-sm">Reason</p>
                 <p className="text-slate-900">{selectedReferral.referralReason || "-"}</p>
               </div>
-
+ 
               <div>
                 <p className="text-slate-500 text-sm">Notes</p>
                 <p className="text-slate-900 whitespace-pre-wrap">{selectedReferral.notes || "-"}</p>
               </div>
-
+ 
               {!selectedReferral.practitionerClerkUserId && (
                 <div className="space-y-2 rounded-lg border border-slate-200 p-3">
                   <p className="text-sm font-medium text-slate-900">Assign Practitioner</p>
@@ -311,7 +308,7 @@ export const TestFeature = () => {
               )}
             </div>
           )}
-
+ 
           <SheetFooter>
             {!selectedReferral?.practitionerClerkUserId && (
               <Button
@@ -330,4 +327,3 @@ export const TestFeature = () => {
     </div>
   );
 };
-

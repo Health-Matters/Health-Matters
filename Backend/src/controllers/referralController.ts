@@ -4,14 +4,13 @@ import { ZodError } from 'zod';
 import {
   assignReferralBodySchema,
   createReferralBodySchema,
-  managerIdParamsSchema,
-  managerReferralsQuerySchema,
+  myReferralsQuerySchema,
   patientIdParamsSchema,
   practitionerIdParamsSchema,
   referralIdParamsSchema,
   updateReferralBodySchema,
 } from '../Dtos/referral.dto';
-import { ValidationError, NotFoundError } from '../errors/errors';
+import { ValidationError, NotFoundError, UnauthorizedError } from '../errors/errors';
 import { getAuth } from '@clerk/express';
 
 const formatValidationErrors = (error: ZodError) =>
@@ -22,12 +21,9 @@ const formatValidationErrors = (error: ZodError) =>
 
 export const getAllReferrals = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log('🔵 GET /api/referrals - Fetching all referrals');
     const referrals = await Referral.find().sort({ createdAt: -1 });
-    console.log(`✅ Found ${referrals.length} referrals`);
     res.status(200).json(referrals);
   } catch (error) {
-    console.error('❌ Error in getAllReferrals:', error);
     next(error);
   }
 };
@@ -72,15 +68,25 @@ export const getReferralsByPractitionerId = async (
   }
 };
 
+// SECURITY: submittedByClerkUserId is never accepted from the client body.
+// It is always derived from the Clerk token server-side.
 export const createReferral = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const auth = getAuth(req);
+    if (!auth.userId) {
+      throw new UnauthorizedError('Authentication required');
+    }
+
     const parsedBody = createReferralBodySchema.safeParse(req.body);
 
     if (!parsedBody.success) {
       throw new ValidationError(JSON.stringify(formatValidationErrors(parsedBody.error)));
     }
 
-    const newReferral = await Referral.create(parsedBody.data);
+    const newReferral = await Referral.create({
+      ...parsedBody.data,
+      submittedByClerkUserId: auth.userId,
+    });
 
     res.status(201).json(newReferral);
   } catch (error) {
@@ -198,23 +204,24 @@ export const assignReferralById = async (req: Request, res: Response, next: Next
   }
 };
 
-// MGR-005: Get all referrals submitted by a manager, with filtering, search & pagination
-export const getReferralsByManagerId = async (req: Request, res: Response, next: NextFunction) => {
+// MGR-005: Get referrals submitted by the currently authenticated manager.
+// SECURITY: Manager identity is derived from the Clerk token — no ID in the URL.
+export const getMySubmittedReferrals = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const parsedParams = managerIdParamsSchema.safeParse(req.params);
-    if (!parsedParams.success) {
-      throw new ValidationError(JSON.stringify(formatValidationErrors(parsedParams.error)));
+    const auth = getAuth(req);
+    if (!auth.userId) {
+      throw new UnauthorizedError('Authentication required');
     }
 
-    const parsedQuery = managerReferralsQuerySchema.safeParse(req.query);
+    const parsedQuery = myReferralsQuerySchema.safeParse(req.query);
     if (!parsedQuery.success) {
       throw new ValidationError(JSON.stringify(formatValidationErrors(parsedQuery.error)));
     }
 
-    const { managerId } = parsedParams.data;
     const { status, serviceType, search, dateFrom, dateTo, page, limit } = parsedQuery.data;
 
-    const filter: Record<string, unknown> = { submittedByClerkUserId: managerId };
+    // Identity comes from the token — never from a URL param
+    const filter: Record<string, unknown> = { submittedByClerkUserId: auth.userId };
 
     if (status) filter.referralStatus = status;
     if (serviceType) filter.serviceType = serviceType;
@@ -226,11 +233,9 @@ export const getReferralsByManagerId = async (req: Request, res: Response, next:
       filter.createdAt = dateFilter;
     }
 
-    // Search by employee (patient) clerkUserId or referral MongoDB _id (as string prefix)
     if (search) {
       filter.$or = [
         { patientClerkUserId: { $regex: search, $options: 'i' } },
-        // Allow searching by referral _id string when it is a valid ObjectId
         ...(search.match(/^[a-f\d]{24}$/i) ? [{ _id: search }] : []),
       ];
     }

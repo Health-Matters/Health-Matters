@@ -54,7 +54,6 @@ const URGENCY_LEVELS = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 const ReferralDrawer = ({ employee, onClose, onSubmitted }) => {
-  const { user } = useUser();
   const [createReferral, { isLoading: submitting }] = useCreateReferralMutation();
   const [form, setForm] = useState({
     serviceType: "", referralReason: "", urgency: "routine",
@@ -74,9 +73,9 @@ const ReferralDrawer = ({ employee, onClose, onSubmitted }) => {
 
   const validate = () => {
     const e = {};
-    if (!form.serviceType)           e.serviceType    = "Required";
-    if (!form.referralReason.trim()) e.referralReason = "Required";
-    if (!form.workImpact.trim())     e.workImpact     = "Required";
+    if (!form.serviceType)           e.serviceType      = "Required";
+    if (!form.referralReason.trim()) e.referralReason   = "Required";
+    if (!form.workImpact.trim())     e.workImpact       = "Required";
     if (!form.consentConfirmed)      e.consentConfirmed = "You must confirm consent";
     return e;
   };
@@ -93,12 +92,12 @@ const ReferralDrawer = ({ employee, onClose, onSubmitted }) => {
     ].filter(Boolean).join("\n\n");
 
     try {
+      // SECURITY: submittedByClerkUserId is NOT sent — set server-side from Clerk token
       const result = await createReferral({
-        patientClerkUserId:     employee.clerkUserId,
-        submittedByClerkUserId: user?.id,
-        serviceType:            form.serviceType,
-        referralReason:         form.referralReason,
-        notes:                  combinedNotes || undefined,
+        patientClerkUserId: employee.clerkUserId,
+        serviceType:        form.serviceType,
+        referralReason:     form.referralReason,
+        notes:              combinedNotes || undefined,
       }).unwrap();
       setSubmittedRef(result);
       setDone(true);
@@ -388,9 +387,9 @@ const EmployeeDetailModal = ({ employee, referrals, onClose, onReferral }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const ManagerTestTeam = () => {
-  const [search, setSearch]           = useState("");
-  const [referralTarget, setReferralTarget] = useState(null); // employee to submit referral for
-  const [detailTarget, setDetailTarget]     = useState(null); // employee to view detail
+  const [search, setSearch]                 = useState("");
+  const [referralTarget, setReferralTarget] = useState(null);
+  const [detailTarget, setDetailTarget]     = useState(null);
 
   const { data: employees = [], isLoading: empLoading, error: empError } = useGetUsersQuery({ role: "employee" });
   const { data: allReferrals = [], refetch } = useGetReferralsQuery();
@@ -414,7 +413,6 @@ export const ManagerTestTeam = () => {
 
   return (
     <div className="space-y-6">
-      {/* Modals / Drawer */}
       {referralTarget && (
         <ReferralDrawer
           employee={referralTarget}
@@ -431,7 +429,6 @@ export const ManagerTestTeam = () => {
         />
       )}
 
-      {/* Page header */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Team</h1>
@@ -441,7 +438,6 @@ export const ManagerTestTeam = () => {
         </div>
       </div>
 
-      {/* Search */}
       <input
         type="text"
         placeholder="Search by name, email or department…"
@@ -450,7 +446,6 @@ export const ManagerTestTeam = () => {
         className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-4 pr-4 text-sm text-slate-700 shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-300"
       />
 
-      {/* States */}
       {empLoading && (
         <div className="flex items-center gap-2 py-12 text-sm text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading team members…
@@ -465,20 +460,18 @@ export const ManagerTestTeam = () => {
         <div className="py-12 text-center text-sm text-slate-400">No team members found.</div>
       )}
 
-      {/* Employee grid */}
       {!empLoading && !empError && filtered.length > 0 && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filtered.map((member) => {
-            const fullName   = `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim() || "Unknown";
-            const initials   = [member.firstName?.[0], member.lastName?.[0]].filter(Boolean).join("").toUpperCase() || "?";
+            const fullName     = `${member.firstName ?? ""} ${member.lastName ?? ""}`.trim() || "Unknown";
+            const initials     = [member.firstName?.[0], member.lastName?.[0]].filter(Boolean).join("").toUpperCase() || "?";
             const empReferrals = referralsByEmployee[member.clerkUserId] ?? [];
-            const hasActive  = empReferrals.some((r) => ACTIVE_STATUSES.includes(r.referralStatus));
+            const hasActive    = empReferrals.some((r) => ACTIVE_STATUSES.includes(r.referralStatus));
 
             return (
               <div key={member._id ?? member.clerkUserId}
                 className={`rounded-xl border bg-white p-5 shadow-sm transition hover:shadow-md ${hasActive ? "border-amber-200" : "border-slate-200"}`}>
 
-                {/* Top row */}
                 <div className="flex items-start gap-3">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-800 text-sm font-semibold text-white overflow-hidden">
                     {member.profileImageUrl
@@ -494,7 +487,6 @@ export const ManagerTestTeam = () => {
                   )}
                 </div>
 
-                {/* Contact info */}
                 <div className="mt-3 space-y-1.5">
                   {member.email && (
                     <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -516,10 +508,8 @@ export const ManagerTestTeam = () => {
                   )}
                 </div>
 
-                {/* Health summary pills */}
                 <HealthSummary referrals={empReferrals} />
 
-                {/* Actions */}
                 <div className="mt-4 flex gap-2 border-t border-slate-100 pt-4">
                   <button
                     onClick={() => setDetailTarget(member)}
