@@ -9,7 +9,8 @@ import AdminDashboardLayout from "./pages/DashBoards/AdminDashboard/admin-dashbo
 import { AdminReferralManagement } from "./pages/DashBoards/AdminDashboard/referral-management.jsx";
 import { DebugAPI } from "./pages/DashBoards/AdminDashboard/debug-api.jsx";
 import { TestOverview } from "./pages/DashBoards/AdminDashboard/test-overview.jsx";
-import { TestAnalytics } from "./pages/DashBoards/AdminDashboard/test-analytics.jsx";
+import { AnalyticsKPI } from "./pages/DashBoards/AdminDashboard/AnalyticsKPI.jsx";
+import { ServiceManagement } from "./pages/DashBoards/AdminDashboard/ServiceManagement.jsx";
 import { TestServices } from "./pages/DashBoards/AdminDashboard/test-services.jsx";
 import TestDiary from "./pages/DashBoards/AdminDashboard/test-diary.jsx";
 import { TestUsers } from "./pages/DashBoards/AdminDashboard/test-users.jsx";
@@ -68,7 +69,7 @@ const ClerkWithRoutes = () => {
       // 4. Force redirects to root 
       signInForceRedirectUrl="/"
       signUpForceRedirectUrl="/"
-    >
+    >https://github.com/Health-Matters/Health-Matters/pull/59/conflicts
       <Routes>
         <Route element={<RootLayout />}>
           <Route path="/sign-in" element={<SignInPage />} />
