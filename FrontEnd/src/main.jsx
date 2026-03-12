@@ -6,10 +6,11 @@ import RootLayout from "@/layout/root-layout.jsx";
 import { LandingPage } from "./pages/Landing-page/LandingPage";
 // Import Admin Dashboard
 import AdminDashboardLayout from "./pages/DashBoards/AdminDashboard/admin-dashboard-layout.jsx";
-import { TestFeature } from "./pages/DashBoards/AdminDashboard/test.jsx";
+import { AdminReferralManagement } from "./pages/DashBoards/AdminDashboard/referral-management.jsx";
 import { DebugAPI } from "./pages/DashBoards/AdminDashboard/debug-api.jsx";
 import { TestOverview } from "./pages/DashBoards/AdminDashboard/test-overview.jsx";
-import { TestAnalytics } from "./pages/DashBoards/AdminDashboard/test-analytics.jsx";
+import { AnalyticsKPI } from "./pages/DashBoards/AdminDashboard/AnalyticsKPI.jsx";
+import { ServiceManagement } from "./pages/DashBoards/AdminDashboard/ServiceManagement.jsx";
 import { TestServices } from "./pages/DashBoards/AdminDashboard/test-services.jsx";
 import TestDiary from "./pages/DashBoards/AdminDashboard/test-diary.jsx";
 import { TestUsers } from "./pages/DashBoards/AdminDashboard/test-users.jsx";
@@ -28,11 +29,11 @@ import { Accessibility } from "./pages/DashBoards/EmployeeDashboard/Accessibilit
 
 // Import Practitioner Dashboard
 import PractitionerDashboardLayout from "./pages/DashBoards/PractitionerDashboard/practitioner-dashboard-layout.jsx";
-import { PractitionerTestOverview } from "./pages/DashBoards/PractitionerDashboard/test-overview.jsx";
+import { PractitionerReferralOverview } from "./pages/DashBoards/PractitionerDashboard/referral-overview-live.jsx";
 import { PractitionerTestPatients } from "./pages/DashBoards/PractitionerDashboard/test-patients.jsx";
 import { PractitionerTestReviews } from "./pages/DashBoards/PractitionerDashboard/test-reviews.jsx";
 import { PractitionerTestProfile } from "./pages/DashBoards/PractitionerDashboard/test-profile.jsx";
-import { PractitionerTestAppointments } from "./pages/DashBoards/PractitionerDashboard/test-appointments.jsx";
+import { PractitionerAppointmentsLive } from "./pages/DashBoards/PractitionerDashboard/appointments-live.jsx";
 import { PractitionerTestCreateReferral } from './pages/DashBoards/PractitionerDashboard/test-create-referral.jsx';
 // Import Manager Dashboard
 import ManagerDashboardLayout from "./pages/DashBoards/ManagerDashboard/manager-dashboard-layout.jsx";
@@ -68,7 +69,7 @@ const ClerkWithRoutes = () => {
       // 4. Force redirects to root 
       signInForceRedirectUrl="/"
       signUpForceRedirectUrl="/"
-    >
+    >https://github.com/Health-Matters/Health-Matters/pull/59/conflicts
       <Routes>
         <Route element={<RootLayout />}>
           <Route path="/sign-in" element={<SignInPage />} />
@@ -82,7 +83,7 @@ const ClerkWithRoutes = () => {
               <Route index element={<TestOverview />} />
               <Route path="analytics" element={<TestAnalytics />} />
               <Route path="services" element={<TestServices />} />
-              <Route path="referrals" element={<TestFeature />} />
+              <Route path="referrals" element={<AdminReferralManagement />} />
               <Route path="debug" element={<DebugAPI />} />
               <Route path="diary" element={<TestDiary />} />
               <Route path="users" element={<TestUsers />} />
@@ -100,10 +101,10 @@ const ClerkWithRoutes = () => {
             </Route>
             {/* Practitioner Dashboard Routes */}
             <Route path="/practitioner/dashboard" element={<PractitionerDashboardLayout />}>
-              <Route index element={<PractitionerTestOverview />} />
+              <Route index element={<PractitionerReferralOverview />} />
               <Route path="patients" element={<PractitionerTestPatients />} />
               <Route path="reviews" element={<PractitionerTestReviews />} />
-              <Route path="appointments" element={<PractitionerTestAppointments />} />
+              <Route path="appointments" element={<PractitionerAppointmentsLive />} />
               <Route path="profile" element={<PractitionerTestProfile />} />
               <Route path='create_referral' element={ <PractitionerTestCreateReferral /> } />
             </Route>

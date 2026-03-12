@@ -14,8 +14,16 @@ export {
   useCreateReferralMutation,
   useUpdateReferralsByPatientIdMutation,
   useAssignReferralByIdMutation,
+  useUpdateReferralByIdMutation,
   useDeleteReferralsByPatientIdMutation,
 } from './referralsApi';
+
+export {
+  useGetAppointmentsQuery,
+  useGetAppointmentsByPractitionerIdQuery,
+  useGetAppointmentsByPatientIdQuery,
+  useRespondToAppointmentMutation,
+} from './appointmentsApi';
 
 export {
   useGetServicesQuery,

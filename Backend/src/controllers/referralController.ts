@@ -11,8 +11,14 @@ import {
   referralIdParamsSchema,
   updateReferralBodySchema,
 } from '../Dtos/referral.dto';
-import { ValidationError, NotFoundError } from '../errors/errors';
+import { ValidationError, NotFoundError, UnauthorizedError } from '../errors/errors';
 import { getAuth } from '@clerk/express';
+import {
+	assignAppointmentToPractitioner,
+	confirmAppointmentFromReferral,
+	createPendingAppointmentForReferral,
+	rejectAppointmentFromReferral,
+} from '../utils/appointmentFlow';
 
 const formatValidationErrors = (error: ZodError) =>
   error.issues.map((issue) => ({
@@ -80,7 +86,8 @@ export const createReferral = async (req: Request, res: Response, next: NextFunc
       throw new ValidationError(JSON.stringify(formatValidationErrors(parsedBody.error)));
     }
 
-    const newReferral = await Referral.create(parsedBody.data);
+		const newReferral = await Referral.create(parsedBody.data);
+		await createPendingAppointmentForReferral(newReferral);
 
     res.status(201).json(newReferral);
   } catch (error) {
@@ -157,6 +164,73 @@ export const deleteReferralByPatientId = async (
   } catch (error) {
     next(error);
   }
+};
+
+export const updateReferralById = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const auth = getAuth(req);
+
+		if (!auth.userId) {
+			throw new UnauthorizedError('Authentication required');
+		}
+
+		const parsedParams = referralIdParamsSchema.safeParse(req.params);
+		if (!parsedParams.success) {
+			throw new ValidationError(JSON.stringify(formatValidationErrors(parsedParams.error)));
+		}
+
+		const parsedBody = updateReferralBodySchema.safeParse(req.body);
+		if (!parsedBody.success) {
+			throw new ValidationError(JSON.stringify(formatValidationErrors(parsedBody.error)));
+		}
+
+		const { referralId } = parsedParams.data;
+		const existingReferral = await Referral.findById(referralId);
+
+		if (!existingReferral) {
+			throw new NotFoundError('Referral not found');
+		}
+
+		const updateFields: Record<string, unknown> = { ...parsedBody.data };
+
+		// When a practitioner accepts, record their ID from the token (never trust the client for this)
+		if (parsedBody.data.referralStatus === 'accepted') {
+			updateFields.practitionerClerkUserId = auth.userId;
+			updateFields.acceptedDate = new Date();
+		}
+
+		if (parsedBody.data.referralStatus === 'rejected') {
+			updateFields.rejectedDate = new Date();
+		}
+
+		const updatedReferral = await Referral.findByIdAndUpdate(
+			referralId,
+			{ $set: updateFields },
+			{ new: true, runValidators: true }
+		);
+
+		if (!updatedReferral) {
+			throw new NotFoundError('Referral not found');
+		}
+
+		if (parsedBody.data.referralStatus === 'accepted') {
+			await confirmAppointmentFromReferral({
+				referral: updatedReferral,
+				practitionerClerkUserId: auth.userId,
+			});
+		}
+
+		if (parsedBody.data.referralStatus === 'rejected') {
+			await rejectAppointmentFromReferral({
+				referral: updatedReferral,
+				practitionerClerkUserId: existingReferral.practitionerClerkUserId,
+			});
+		}
+
+		res.status(200).json(updatedReferral);
+	} catch (error) {
+		next(error);
+	}
 };
 
 export const assignReferralById = async (req: Request, res: Response, next: NextFunction) => {

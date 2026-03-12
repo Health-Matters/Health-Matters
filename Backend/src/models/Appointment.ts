@@ -1,164 +1,101 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose from 'mongoose';
 
-export interface IAppointment extends Document {
-  // References
-  referralId: mongoose.Types.ObjectId;
-  practitionerId: mongoose.Types.ObjectId;
-  employeeId: mongoose.Types.ObjectId;
-  
-  // Scheduling
-  scheduledDate: Date;
-  scheduledTime: string;
-  duration: number;
-  endTime: Date;
-  
-  // Location & Format
-  location?: string;
-  appointmentType: 'in_person' | 'video_call' | 'phone_call';
-  meetingLink?: string;
-  roomNumber?: string;
-  
-  // Status
-  status: 'scheduled' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'no_show' | 'rescheduled';
-  
-  // Clinical Documentation
-  clinicalNotes?: string;
-  privateNotes?: string;
-  
-  // Reminders
-  reminders: Array<{
-    type: 'email' | 'sms';
-    sentAt: Date;
-    sentTo: mongoose.Types.ObjectId;
-  }>;
-  
-  // Cancellation/Rescheduling
-  cancellationReason?: string;
-  cancelledBy?: mongoose.Types.ObjectId;
-  cancelledAt?: Date;
-  rescheduledToAppointmentId?: mongoose.Types.ObjectId;
-  
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-const AppointmentSchema: Schema = new Schema(
+const AppointmentSchema = new mongoose.Schema(
   {
-    // References
     referralId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'Referral',
-      required: true
+      required: true,
+      unique: true,
     },
-    practitionerId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+    patientClerkUserId: {
+      type: String,
+      required: true,
+      trim: true,
     },
-    employeeId: {
-      type: Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
+    submittedByClerkUserId: {
+      type: String,
+      trim: true,
     },
-    
-    // Scheduling
+    practitionerClerkUserId: {
+      type: String,
+      trim: true,
+    },
+    assignedByClerkUserId: {
+      type: String,
+      trim: true,
+    },
+    serviceType: {
+      type: String,
+      trim: true,
+    },
+    referralReason: {
+      type: String,
+      trim: true,
+    },
+    assignmentSource: {
+      type: String,
+      enum: ['referral', 'admin'],
+      default: 'referral',
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'assigned', 'confirmed', 'rejected', 'cancelled', 'completed'],
+      default: 'pending',
+      required: true,
+    },
     scheduledDate: {
       type: Date,
-      required: true
     },
     scheduledTime: {
       type: String,
-      required: true
+      trim: true,
     },
     duration: {
       type: Number,
-      required: true,
       default: 30,
       min: 15,
-      max: 240
-    },
-    endTime: {
-      type: Date,
-      required: true
-    },
-    
-    // Location & Format
-    location: {
-      type: String,
-      trim: true
+      max: 240,
     },
     appointmentType: {
       type: String,
-      required: true,
       enum: ['in_person', 'video_call', 'phone_call'],
-      default: 'in_person'
+      default: 'in_person',
+    },
+    location: {
+      type: String,
+      trim: true,
     },
     meetingLink: {
       type: String,
-      trim: true
+      trim: true,
     },
-    roomNumber: {
+    notes: {
       type: String,
-      trim: true
+      trim: true,
     },
-    
-    // Status
-    status: {
-      type: String,
-      required: true,
-      enum: ['scheduled', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show', 'rescheduled'],
-      default: 'scheduled'
+    assignedDate: {
+      type: Date,
     },
-    
-    // Clinical Documentation
-    clinicalNotes: {
-      type: String,
-      trim: true
+    confirmedDate: {
+      type: Date,
     },
-    privateNotes: {
-      type: String,
-      trim: true
+    rejectedDate: {
+      type: Date,
     },
-    
-    // Reminders
-    reminders: [{
-      type: {
-        type: String,
-        enum: ['email', 'sms'],
-        required: true
-      },
-      sentAt: {
-        type: Date,
-        required: true,
-        default: Date.now
-      },
-      sentTo: {
-        type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-      }
-    }],
-    
-    // Cancellation/Rescheduling
-    cancellationReason: {
-      type: String,
-      trim: true
+    completedDate: {
+      type: Date,
     },
-    cancelledBy: {
-      type: Schema.Types.ObjectId,
-      ref: 'User'
+    cancelledDate: {
+      type: Date,
     },
-    cancelledAt: {
-      type: Date
-    },
-    rescheduledToAppointmentId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Appointment'
-    }
   },
   {
-    timestamps: true
+    timestamps: true,
   }
 );
 
-export default mongoose.model<IAppointment>('Appointment', AppointmentSchema);
+AppointmentSchema.index({ practitionerClerkUserId: 1, status: 1 });
+AppointmentSchema.index({ patientClerkUserId: 1, createdAt: -1 });
+
+export const Appointment = mongoose.model('Appointment', AppointmentSchema);
