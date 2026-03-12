@@ -1,13 +1,6 @@
 import { z } from 'zod';
 
-export const referralStatusSchema = z.enum([
-  'pending',
-  'accepted',
-  'rejected',
-  'in_progress',
-  'completed',
-  'cancelled',
-]);
+export const referralStatusSchema = z.enum(['pending', 'accepted', 'rejected']);
 
 const optionalDateSchema = z.coerce.date().optional();
 
@@ -23,10 +16,6 @@ export const referralIdParamsSchema = z.object({
   referralId: z.string().trim().min(1, 'referralId is required'),
 });
 
-export const managerIdParamsSchema = z.object({
-  managerId: z.string().trim().min(1, 'managerId is required'),
-});
-
 export const createReferralBodySchema = z.object({
   patientClerkUserId: z.string().trim().min(1, 'patientClerkUserId is required'),
   submittedByClerkUserId: z.string().trim().optional(),
@@ -40,7 +29,6 @@ export const createReferralBodySchema = z.object({
   acceptedDate: optionalDateSchema,
   rejectedDate: optionalDateSchema,
   completedDate: optionalDateSchema,
-  isConfidential: z.boolean().optional(),
 });
 
 export const updateReferralBodySchema = createReferralBodySchema
@@ -53,15 +41,3 @@ export const updateReferralBodySchema = createReferralBodySchema
 export const assignReferralBodySchema = z.object({
   practitionerClerkUserId: z.string().trim().min(1, 'practitionerClerkUserId is required'),
 });
-
-// MGR-005: query params for filtering/pagination
-export const managerReferralsQuerySchema = z.object({
-  status: referralStatusSchema.optional(),
-  serviceType: z.string().trim().optional(),
-  search: z.string().trim().optional(),
-  dateFrom: optionalDateSchema,
-  dateTo: optionalDateSchema,
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(20).default(20),
-});
-
