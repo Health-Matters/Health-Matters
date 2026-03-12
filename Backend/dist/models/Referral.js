@@ -9,6 +9,7 @@ const referralSchema = new mongoose_1.default.Schema({
     patientClerkUserId: { type: String, required: true },
     submittedByClerkUserId: { type: String },
     practitionerClerkUserId: { type: String },
+    serviceType: { type: String, trim: true },
     referralReason: { type: String, trim: true },
     referralStatus: {
         type: String,

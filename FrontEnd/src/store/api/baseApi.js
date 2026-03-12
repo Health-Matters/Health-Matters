@@ -1,6 +1,6 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 console.log('RTK Query baseUrl:', baseUrl);
 
@@ -31,6 +31,6 @@ const baseQueryWithAuth = fetchBaseQuery({
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithAuth,
-  tagTypes: ['Users', 'Referrals', 'Services'],
+  tagTypes: ['Users', 'Referrals', 'Services', 'Appointments'],
   endpoints: () => ({}),
 });

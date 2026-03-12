@@ -7,6 +7,7 @@ import {
   getReferralsByPatientId,
   getReferralsByPractitionerId,
   updateReferralByPatientId,
+  updateReferralById,
 } from '../controllers/referralController';
 
 const ReferralRouter = express.Router();
@@ -28,6 +29,9 @@ ReferralRouter.put('/patient/:patientId', updateReferralByPatientId);
 
 // DELETE /api/referrals/patient/:patientId - Delete referrals by patientId
 ReferralRouter.delete('/patient/:patientId', deleteReferralByPatientId);
+
+// PUT /api/referrals/:referralId - Update a single referral (accept / reject)
+ReferralRouter.put('/:referralId', updateReferralById);
 
 // PUT /api/referrals/:referralId/assign - Assign practitioner to one referral
 ReferralRouter.put('/:referralId/assign', assignReferralById);

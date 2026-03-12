@@ -27,6 +27,7 @@ import {
 import { UserButton, useUser } from "@clerk/clerk-react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
+
 const items = [
   {
     title: "Overview",
@@ -69,10 +70,10 @@ const PractitionerDashboardLayout = () => {
     <TooltipProvider>
       <SidebarProvider>
         <div className="flex min-h-screen w-full bg-blue-50">
-          <Sidebar className="border-r border-blue-800 bg-blue-800 text-white">
-            <SidebarHeader className="flex h-16 items-center border-b border-blue-800 px-6">
+          <Sidebar className="border-r border-black bg-blue-800 text-white">
+            <SidebarHeader className="flex h-16 items-center border-b px-6">
               <span className="text-lg font-bold tracking-wide text-white">
-                Practitioner Panel
+                Practitioners
               </span>
             </SidebarHeader>
 
@@ -110,8 +111,8 @@ const PractitionerDashboardLayout = () => {
               </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-amber-800 p-4">
-              <div className="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-amber-800">
+            <SidebarFooter className="border-t border-black p-4">
+              <div className="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-black">
                 <div className="flex items-center gap-3">
                   <UserButton
                     appearance={{
@@ -135,7 +136,7 @@ const PractitionerDashboardLayout = () => {
               <div className="flex items-center gap-4">
                 <SidebarTrigger className="bg-blue-700 text-white hover:bg-blue-800" />
                 <h2 className="text-lg font-semibold text-slate-800">
-                  Dashboard
+                  Welcome, Dr. {user?.firstName}
                 </h2>
               </div>
               <div className="flex items-center gap-2">
