@@ -336,7 +336,7 @@ const EmployeeDetailModal = ({ employee, referrals, onClose, onReferral }) => {
         {/* Referral history */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-800">Referral History</h3>
+            <h3 className="text-sm font-semibold text-slate-800">My Referrals</h3>
             <span className="text-xs text-slate-400">{referrals.length} total</span>
           </div>
 
