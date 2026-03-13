@@ -4,7 +4,7 @@ const statusHistorySchema = new mongoose.Schema(
   {
     status: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'],
+      enum: ['pending', 'accepted', 'rejected'],
       required: true,
     },
     changedByClerkUserId: { type: String },
@@ -23,7 +23,7 @@ const referralSchema = new mongoose.Schema(
     referralReason: { type: String, trim: true },
     referralStatus: {
       type: String,
-      enum: ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'],
+      enum: ['pending', 'accepted', 'rejected'],
       default: 'pending',
     },
     notes: { type: String, trim: true },

@@ -4,9 +4,7 @@ export const referralStatusSchema = z.enum([
   'pending',
   'accepted',
   'rejected',
-  'in_progress',
-  'completed',
-  'cancelled',
+  
 ]);
 
 const optionalDateSchema = z.coerce.date().optional();
