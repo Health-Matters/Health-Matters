@@ -81,9 +81,15 @@ const ClerkWithRoutes = () => {
             {/* Admin Dashboard Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboardLayout />}>
               <Route index element={<TestOverview />} />
+<<<<<<< HEAD
               <Route path="analytics" element={<AnalyticsKPI />} />
               <Route path="services" element={<ServiceManagement />} />
               <Route path="referrals" element={<TestFeature />} />
+=======
+              {/* <Route path="analytics" element={<TestAnalytics />} /> */}
+              <Route path="services" element={<TestServices />} />
+              <Route path="referrals" element={<AdminReferralManagement />} />
+>>>>>>> practitioner
               <Route path="debug" element={<DebugAPI />} />
               <Route path="diary" element={<TestDiary />} />
               <Route path="users" element={<TestUsers />} />
