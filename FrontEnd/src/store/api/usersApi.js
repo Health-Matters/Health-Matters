@@ -9,6 +9,10 @@ export const usersApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Users'],
     }),
+    getMe: builder.query({
+      query: () => '/users/me',
+      providesTags: ['Users'],
+    }),
     updateMe: builder.mutation({
       query: (body) => ({
         url: '/users/me',
@@ -21,4 +25,4 @@ export const usersApi = baseApi.injectEndpoints({
   overrideExisting: false,
 });
 
-export const { useGetUsersQuery, useUpdateMeMutation } = usersApi;
+export const { useGetUsersQuery, useGetMeQuery, useUpdateMeMutation } = usersApi;

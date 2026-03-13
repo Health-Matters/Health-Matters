@@ -41,3 +41,7 @@ export const updateReferralBodySchema = createReferralBodySchema
 export const assignReferralBodySchema = z.object({
   practitionerClerkUserId: z.string().trim().min(1, 'practitionerClerkUserId is required'),
 });
+
+export const updateReferralStatusBodySchema = z.object({
+  referralStatus: referralStatusSchema,
+});

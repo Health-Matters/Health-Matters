@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.assignReferralBodySchema = exports.updateReferralBodySchema = exports.createReferralBodySchema = exports.referralIdParamsSchema = exports.practitionerIdParamsSchema = exports.patientIdParamsSchema = exports.referralStatusSchema = void 0;
+exports.updateReferralStatusBodySchema = exports.assignReferralBodySchema = exports.updateReferralBodySchema = exports.createReferralBodySchema = exports.referralIdParamsSchema = exports.practitionerIdParamsSchema = exports.patientIdParamsSchema = exports.referralStatusSchema = void 0;
 const zod_1 = require("zod");
 exports.referralStatusSchema = zod_1.z.enum(['pending', 'accepted', 'rejected']);
 const optionalDateSchema = zod_1.z.coerce.date().optional();
@@ -35,4 +35,7 @@ exports.updateReferralBodySchema = exports.createReferralBodySchema
 });
 exports.assignReferralBodySchema = zod_1.z.object({
     practitionerClerkUserId: zod_1.z.string().trim().min(1, 'practitionerClerkUserId is required'),
+});
+exports.updateReferralStatusBodySchema = zod_1.z.object({
+    referralStatus: exports.referralStatusSchema,
 });

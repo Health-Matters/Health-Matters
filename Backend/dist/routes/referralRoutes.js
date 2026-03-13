@@ -18,8 +18,8 @@ ReferralRouter.post('/', referralController_1.createReferral);
 ReferralRouter.put('/patient/:patientId', referralController_1.updateReferralByPatientId);
 // DELETE /api/referrals/patient/:patientId - Delete referrals by patientId
 ReferralRouter.delete('/patient/:patientId', referralController_1.deleteReferralByPatientId);
-// PUT /api/referrals/:referralId - Update a single referral (accept / reject)
-ReferralRouter.put('/:referralId', referralController_1.updateReferralById);
 // PUT /api/referrals/:referralId/assign - Assign practitioner to one referral
 ReferralRouter.put('/:referralId/assign', referralController_1.assignReferralById);
+// PUT /api/referrals/:referralId/status - Update referral status
+ReferralRouter.put('/:referralId/status', referralController_1.updateReferralStatus);
 exports.default = ReferralRouter;

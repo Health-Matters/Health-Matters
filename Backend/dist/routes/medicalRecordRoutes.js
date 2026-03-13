@@ -4,7 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const appointmentController_1 = require("../controllers/appointmentController");
+const medicalRecordController_1 = require("../controllers/medicalRecordController");
 const router = express_1.default.Router();
-router.get("/employee/:employeeId", appointmentController_1.getAppointmentsByEmployeeId);
+// GET /api/medical-records/access-count/:employeeId
+router.get("/access-count/:employeeId", medicalRecordController_1.getAccessLogCountByEmployeeId);
 exports.default = router;

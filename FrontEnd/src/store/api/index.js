@@ -2,6 +2,7 @@ export { baseApi } from './baseApi';
 
 export {
   useGetUsersQuery,
+  useGetMeQuery,
   useUpdateMeMutation,
 } from './usersApi';
 
@@ -12,16 +13,9 @@ export {
   useCreateReferralMutation,
   useUpdateReferralsByPatientIdMutation,
   useAssignReferralByIdMutation,
-  useUpdateReferralByIdMutation,
   useDeleteReferralsByPatientIdMutation,
+  useUpdateReferralStatusMutation,
 } from './referralsApi';
-
-export {
-  useGetAppointmentsQuery,
-  useGetAppointmentsByPractitionerIdQuery,
-  useGetAppointmentsByPatientIdQuery,
-  useRespondToAppointmentMutation,
-} from './appointmentsApi';
 
 export {
   useGetServicesQuery,
@@ -30,3 +24,8 @@ export {
   useUpdateServiceByIdMutation,
   useDeleteServiceByIdMutation,
 } from './servicesApi';
+
+export {
+  useGetNotificationsQuery,
+  useMarkNotificationReadMutation,
+} from './notificationsApi';

@@ -1,18 +1,8 @@
-import express from 'express';
-import {
-  getAllAppointments,
-  getAppointmentByReferralId,
-  getAppointmentsByPatientId,
-  getAppointmentsByPractitionerId,
-  respondToAppointmentById,
-} from '../controllers/appointmentController';
+import express from "express";
+import { getAppointmentsByEmployeeId } from "../controllers/appointmentController";
 
-const AppointmentRouter = express.Router();
+const router = express.Router();
 
-AppointmentRouter.get('/', getAllAppointments);
-AppointmentRouter.get('/referral/:referralId', getAppointmentByReferralId);
-AppointmentRouter.get('/patient/:patientId', getAppointmentsByPatientId);
-AppointmentRouter.get('/practitioner/:practitionerId', getAppointmentsByPractitionerId);
-AppointmentRouter.put('/:appointmentId/respond', respondToAppointmentById);
+router.get("/employee/:employeeId", getAppointmentsByEmployeeId);
 
-export default AppointmentRouter;
+export default router;

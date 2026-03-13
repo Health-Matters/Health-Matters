@@ -5,69 +5,99 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const svix_1 = require("svix");
-const User_1 = require("./../../models/User"); // Check this path matches your file structure
+const User_1 = require("./../../models/User");
 const webhooksRouter = express_1.default.Router();
 webhooksRouter.post("/clerk", 
-// 1. Force Raw Body for verification (Standard for Clerk)
+// Force Raw Body — must come before express.json() for svix signature verification
 express_1.default.raw({ type: "application/json" }), async (req, res, next) => {
     try {
         const payloadString = req.body.toString();
         const svixHeaders = req.headers;
-        // 2. Load Secret
         if (!process.env.CLERK_WEBHOOK_SIGNING_SECRET) {
-            throw new Error("Missing CLERK_WEBHOOK_SECRET in .env");
+            throw new Error("Missing CLERK_WEBHOOK_SIGNING_SECRET in .env");
         }
         const wh = new svix_1.Webhook(process.env.CLERK_WEBHOOK_SIGNING_SECRET);
-        // 3. Verify Signature (Safely)
-        // This returns the JSON object if valid, or throws an error if not
         const evt = wh.verify(payloadString, svixHeaders);
-        // Log for debugging
         const eventType = evt.type;
-        console.log(`✅ Webhook verified: ${eventType}`);
-        // 4. Handle 'user.created'
+        console.log(`✅ Webhook received: ${eventType}`);
+        // ── user.created ────────────────────────────────────────────────────────
         if (eventType === "user.created") {
             const { id, email_addresses, username, first_name, last_name } = evt.data;
-            // Safety: Extract email and generate username fallback if needed
-            const email = email_addresses[0]?.email_address;
+            const email = email_addresses?.[0]?.email_address;
             if (!email) {
-                return res.status(400).json({ success: false, message: "Missing user email" });
-            }
-            const finalUsername = username || email.split('@')[0];
-            // Check for duplicates before creating
-            const existingUser = await User_1.User.findOne({ clerkUserId: id });
-            if (existingUser) {
-                console.log("User already exists, skipping.");
+                console.warn("⚠️  user.created: no email address in payload, skipping.");
                 return res.status(200).json({ success: true });
             }
+            // Deduplicate — Clerk can occasionally fire the event twice
+            const existing = await User_1.User.findOne({ clerkUserId: id });
+            if (existing) {
+                console.log(`user.created: user ${id} already exists, skipping.`);
+                return res.status(200).json({ success: true });
+            }
+            // Build a unique userName — fall back to email prefix, then append
+            // a short segment of the Clerk ID to avoid collisions (userName is unique)
+            const baseUsername = username || email.split("@")[0];
+            const exists = await User_1.User.findOne({ userName: baseUsername });
+            const finalUsername = exists ? `${baseUsername}_${id.slice(-6)}` : baseUsername;
             await User_1.User.create({
-                clerkUserId: id, // Ensure this matches your DB Schema (clerkId vs clerkUserId)
-                email: email,
+                clerkUserId: id,
+                email,
                 userName: finalUsername,
                 firstName: first_name,
                 lastName: last_name,
             });
-            console.log(`User ${finalUsername} created!`);
+            console.log(`✅ user.created: created user ${finalUsername} (${id})`);
         }
-        // 5. Handle 'user.updated' (FIXED SYNTAX)
+        // ── user.updated ────────────────────────────────────────────────────────
+        // Bug fix: previously only synced public_metadata.role, which is undefined
+        // for most users → Mongoose stripped it → update was a silent no-op.
+        // Now syncs all Clerk-managed fields that are present in the payload.
         if (eventType === "user.updated") {
-            const { id, public_metadata } = evt.data;
-            await User_1.User.findOneAndUpdate({ clerkUserId: id }, // Filter
-            { role: public_metadata?.role }, // Update Data
-            { new: true } // Options
-            );
-            console.log(`User ${id} updated`);
+            const { id, email_addresses, username, first_name, last_name, public_metadata } = evt.data;
+            // Build the update — only include fields Clerk actually provided
+            const updateFields = {};
+            const email = email_addresses?.[0]?.email_address;
+            if (email)
+                updateFields.email = email;
+            if (first_name)
+                updateFields.firstName = first_name;
+            if (last_name)
+                updateFields.lastName = last_name;
+            if (username)
+                updateFields.userName = username;
+            // Role is set via Clerk's Public Metadata in the Clerk dashboard
+            const role = public_metadata?.role;
+            if (role)
+                updateFields.role = role;
+            if (Object.keys(updateFields).length === 0) {
+                console.log(`user.updated: no relevant fields changed for ${id}, skipping DB write.`);
+                return res.status(200).json({ success: true });
+            }
+            const updated = await User_1.User.findOneAndUpdate({ clerkUserId: id }, { $set: updateFields }, { new: true, runValidators: true });
+            if (!updated) {
+                // User not in DB yet — can happen if the webhook fires before user.created is processed
+                console.warn(`user.updated: no DB record found for clerkUserId ${id}`);
+            }
+            else {
+                console.log(`✅ user.updated: synced fields [${Object.keys(updateFields).join(", ")}] for ${id}`);
+            }
         }
-        // 6. Handle 'user.deleted'
+        // ── user.deleted ────────────────────────────────────────────────────────
         if (eventType === "user.deleted") {
             const { id } = evt.data;
-            await User_1.User.findOneAndDelete({ clerkUserId: id });
-            console.log(`User ${id} deleted`);
+            const deleted = await User_1.User.findOneAndDelete({ clerkUserId: id });
+            if (deleted) {
+                console.log(`✅ user.deleted: removed user ${id}`);
+            }
+            else {
+                console.warn(`user.deleted: no DB record found for clerkUserId ${id}`);
+            }
         }
         return res.status(200).json({ success: true });
     }
     catch (error) {
-        console.error("❌ Error verifying webhook:", error);
-        next(error); // Pass to global error handler
+        console.error("❌ Webhook error:", error);
+        next(error);
     }
 });
 exports.default = webhooksRouter;

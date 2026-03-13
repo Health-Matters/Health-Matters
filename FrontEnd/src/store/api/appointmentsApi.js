@@ -2,33 +2,42 @@ import { baseApi } from './baseApi';
 
 export const appointmentsApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getAppointments: builder.query({
-      query: () => '/appointments',
+
+    getAppointmentsByEmployeeId: builder.query({
+      query: (employeeId) => `/appointments/employee/${employeeId}`,
       providesTags: ['Appointments'],
     }),
+
     getAppointmentsByPractitionerId: builder.query({
       query: (practitionerId) => `/appointments/practitioner/${practitionerId}`,
       providesTags: ['Appointments'],
     }),
-    getAppointmentsByPatientId: builder.query({
-      query: (patientId) => `/appointments/patient/${patientId}`,
-      providesTags: ['Appointments'],
-    }),
-    respondToAppointment: builder.mutation({
-      query: ({ appointmentId, status }) => ({
-        url: `/appointments/${appointmentId}/respond`,
-        method: 'PUT',
-        body: { status },
+
+    createAppointment: builder.mutation({
+      query: (body) => ({
+        url: '/appointments',
+        method: 'POST',
+        body
       }),
-      invalidatesTags: ['Appointments', 'Referrals'],
+      invalidatesTags: ['Appointments']
     }),
+
+    updateAppointmentStatus: builder.mutation({
+      query: ({ appointmentId, body }) => ({
+        url: `/appointments/${appointmentId}`,
+        method: 'PUT',
+        body
+      }),
+      invalidatesTags: ['Appointments']
+    }),
+
   }),
-  overrideExisting: false,
+  overrideExisting: false
 });
 
 export const {
-  useGetAppointmentsQuery,
+  useGetAppointmentsByEmployeeIdQuery,
   useGetAppointmentsByPractitionerIdQuery,
-  useGetAppointmentsByPatientIdQuery,
-  useRespondToAppointmentMutation,
+  useCreateAppointmentMutation,
+  useUpdateAppointmentStatusMutation
 } = appointmentsApi;

@@ -20,7 +20,7 @@ export const referralsApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Referrals', 'Appointments'],
+      invalidatesTags: ['Referrals'],
     }),
     updateReferralsByPatientId: builder.mutation({
       query: ({ patientId, body }) => ({
@@ -28,7 +28,7 @@ export const referralsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body,
       }),
-      invalidatesTags: ['Referrals', 'Appointments'],
+      invalidatesTags: ['Referrals'],
     }),
     assignReferralById: builder.mutation({
       query: ({ referralId, practitionerClerkUserId }) => ({
@@ -36,22 +36,22 @@ export const referralsApi = baseApi.injectEndpoints({
         method: 'PUT',
         body: { practitionerClerkUserId },
       }),
-      invalidatesTags: ['Referrals', 'Appointments'],
-    }),
-    updateReferralById: builder.mutation({
-      query: ({ referralId, body }) => ({
-        url: `/referrals/${referralId}`,
-        method: 'PUT',
-        body,
-      }),
-      invalidatesTags: ['Referrals', 'Appointments'],
+      invalidatesTags: ['Referrals'],
     }),
     deleteReferralsByPatientId: builder.mutation({
       query: (patientId) => ({
         url: `/referrals/patient/${patientId}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Referrals', 'Appointments'],
+      invalidatesTags: ['Referrals'],
+    }),
+    updateReferralStatus: builder.mutation({
+      query: ({ referralId, referralStatus }) => ({
+        url: `/referrals/${referralId}/status`,
+        method: 'PUT',
+        body: { referralStatus },
+      }),
+      invalidatesTags: ['Referrals'],
     }),
   }),
   overrideExisting: false,
@@ -64,6 +64,6 @@ export const {
   useCreateReferralMutation,
   useUpdateReferralsByPatientIdMutation,
   useAssignReferralByIdMutation,
-  useUpdateReferralByIdMutation,
   useDeleteReferralsByPatientIdMutation,
+  useUpdateReferralStatusMutation,
 } = referralsApi;

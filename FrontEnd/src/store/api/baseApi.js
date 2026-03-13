@@ -1,28 +1,33 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
 
 console.log('RTK Query baseUrl:', baseUrl);
 
+// Safe token getter — uses window.Clerk which ClerkProvider populates.
+// Wrapped in a null-check so it never throws on early page loads.
+const getClerkToken = async () => {
+  try {
+    if (window.Clerk?.session) {
+      return await window.Clerk.session.getToken();
+    }
+    return null;
+  } catch (err) {
+    console.error('Failed to get Clerk token:', err);
+    return null;
+  }
+};
+
 const baseQueryWithAuth = fetchBaseQuery({
   baseUrl,
-  credentials: 'include',
+  credentials: 'omit',
   prepareHeaders: async (headers) => {
-    try {
-      // Access the Clerk instance from window after it's loaded
-      if (window.Clerk && window.Clerk.session) {
-        const token = await window.Clerk.session.getToken();
-        if (token) {
-          console.log('Adding Clerk token to request');
-          headers.set('Authorization', `Bearer ${token}`);
-        } else {
-          console.log('No Clerk token available');
-        }
-      } else {
-        console.log('Clerk not initialized or no session');
-      }
-    } catch (error) {
-      console.error('Error getting Clerk token:', error);
+    const token = await getClerkToken();
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+      console.log('Adding Clerk token to request');
+    } else {
+      console.warn('No Clerk token available — request will be unauthenticated');
     }
     return headers;
   },
@@ -31,6 +36,6 @@ const baseQueryWithAuth = fetchBaseQuery({
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithAuth,
-  tagTypes: ['Users', 'Referrals', 'Services', 'Appointments'],
+  tagTypes: ['Users', 'Referrals', 'Services', 'Notifications', 'MedicalRecords'],
   endpoints: () => ({}),
 });

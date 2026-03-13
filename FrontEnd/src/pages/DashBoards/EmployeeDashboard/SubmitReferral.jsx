@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router"; 
-import { PlusCircle, ChevronLeft, Send } from "lucide-react";
+import { PlusCircle, ChevronLeft, Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { useCreateReferralMutation } from "../../../store/api";
+import { useUser } from "@clerk/clerk-react";
 
 // Required Fields Note (centered with circular info icon + red star)
 const RequiredFieldsNote = () => (
@@ -18,7 +20,41 @@ const RequiredFieldsNote = () => (
 
 export const SubmitReferral = () => {
   const navigate = useNavigate();
+  const { user } = useUser();
   const [isCreating, setIsCreating] = useState(false);
+  const [serviceType, setServiceType] = useState("");
+  const [referralReason, setReferralReason] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const [createReferral, { isLoading, error }] = useCreateReferralMutation();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!serviceType || !referralReason) return;
+
+    try {
+      await createReferral({
+        patientClerkUserId: user?.id,
+        submittedByClerkUserId: user?.id,
+        serviceType,
+        referralReason,
+        notes: notes || undefined,
+      }).unwrap();
+
+      setSubmitted(true);
+    } catch (_) {
+      // error is surfaced via the `error` state from the mutation
+    }
+  };
+
+  const handleNewReferral = () => {
+    setServiceType("");
+    setReferralReason("");
+    setNotes("");
+    setSubmitted(false);
+    setIsCreating(false);
+  };
 
   // ─── PART A: THE PRICING LIST (First View) ───
   if (!isCreating) {
@@ -60,6 +96,27 @@ export const SubmitReferral = () => {
     );
   }
 
+  // ─── SUCCESS STATE ───
+  if (submitted) {
+    return (
+      <div className="p-8 max-w-5xl mx-auto animate-in fade-in duration-500">
+        <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-12 flex flex-col items-center gap-4 text-center">
+          <CheckCircle size={56} className="text-emerald-600" />
+          <h2 className="text-2xl font-bold text-slate-900">Referral Submitted</h2>
+          <p className="text-sm text-slate-500 max-w-sm">
+            Your referral has been received and is currently <span className="font-semibold text-emerald-700">pending review</span>. You will be notified once it is processed.
+          </p>
+          <button
+            onClick={handleNewReferral}
+            className="mt-4 px-6 py-3 bg-emerald-700 text-white rounded-xl font-bold hover:bg-emerald-800 shadow-lg transition-all"
+          >
+            Submit Another Referral
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ─── PART B: THE SUBMIT FORM (Second View) ───
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-6 animate-in slide-in-from-right duration-300">
@@ -70,7 +127,7 @@ export const SubmitReferral = () => {
         <ChevronLeft size={18} /> Back
       </button>
 
-      <form className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* Patient ID Confirmation */}
         <div className="bg-white p-6 rounded-2xl border border-emerald-100 shadow-sm">
           <h2 className="text-xs font-bold text-emerald-800 uppercase tracking-widest mb-4">1. Identity Confirmation</h2>
@@ -78,7 +135,7 @@ export const SubmitReferral = () => {
             <label className="text-sm font-medium text-slate-700 mb-1 block">Patient ID (Verified)</label>
             <input 
               type="text" 
-              value="PAT-882-2026" 
+              value={user?.id ?? "Loading..."}
               readOnly 
               className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-500 cursor-not-allowed outline-none" 
             />
@@ -93,14 +150,19 @@ export const SubmitReferral = () => {
             <label className="text-sm font-medium text-slate-700 mb-1">
               Service Type <span className="text-red-600">*</span>
             </label>
-            <select className="w-full p-4 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+            <select
+              required
+              value={serviceType}
+              onChange={(e) => setServiceType(e.target.value)}
+              className="w-full p-4 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none bg-white"
+            >
               <option value="">-- Select a Service --</option>
-              <option value="occupational_health">Occupational Health</option>
-              <option value="mental_health">Mental Health</option>
-              <option value="physiotherapy">Physiotherapy</option>
-              <option value="health_screening">Health Screening</option>
-              <option value="counselling">Counselling</option>
-              <option value="ergonomic_assessment">Ergonomic Assessment</option>
+              <option value="Occupational Health">Occupational Health</option>
+              <option value="Mental Health">Mental Health</option>
+              <option value="Physiotherapy">Physiotherapy</option>
+              <option value="Health Screening">Health Screening</option>
+              <option value="Counselling">Counselling</option>
+              <option value="Ergonomic Assessment">Ergonomic Assessment</option>
             </select>
           </div>
 
@@ -109,15 +171,44 @@ export const SubmitReferral = () => {
               Reason for Referral <span className="text-red-600">*</span>
             </label>
             <textarea
+              required
               rows={5}
+              value={referralReason}
+              onChange={(e) => setReferralReason(e.target.value)}
               className="w-full p-4 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
               placeholder="Describe the reason for this request..."
             />
           </div>
+
+          <div className="flex flex-col">
+            <label className="text-sm font-medium text-slate-700 mb-1">Additional Notes</label>
+            <textarea
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full p-4 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+              placeholder="Any additional context for the practitioner (optional)..."
+            />
+          </div>
         </div>
 
-        <button type="submit" className="w-full py-4 bg-emerald-700 text-white rounded-xl font-bold hover:bg-emerald-800 shadow-lg transition-all active:scale-95">
-          Submit Referral <Send size={18} className="inline ml-2" />
+        {error && (
+          <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+            <AlertCircle size={18} className="shrink-0" />
+            <span>{error?.data?.message ?? "Failed to submit referral. Please try again."}</span>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={isLoading || !serviceType || !referralReason}
+          className="w-full py-4 bg-emerald-700 text-white rounded-xl font-bold hover:bg-emerald-800 shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {isLoading ? (
+            <><Loader2 size={18} className="animate-spin" /> Submitting...</>
+          ) : (
+            <>Submit Referral <Send size={18} /></>
+          )}
         </button>
       </form>
 

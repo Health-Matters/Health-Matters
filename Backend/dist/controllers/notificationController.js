@@ -1,76 +1,69 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.markAllNotificationsAsRead = exports.markNotificationAsRead = exports.getMyNotifications = void 0;
+exports.markNotificationRead = exports.getNotificationsForCurrentUser = void 0;
 const express_1 = require("@clerk/express");
+const Notification_1 = __importDefault(require("../models/Notification"));
+const User_1 = require("../models/User");
 const notification_dto_1 = require("../Dtos/notification.dto");
-const errors_1 = require("../errors/errors");
-const Notification_1 = require("../models/Notification");
-const formatValidationErrors = (error) => error.issues.map((issue) => ({
-    field: issue.path.join('.'),
-    message: issue.message,
-}));
-const getMyNotifications = async (req, res, next) => {
+const getNotificationsForCurrentUser = async (req, res, next) => {
     try {
         const auth = (0, express_1.getAuth)(req);
         if (!auth.userId) {
-            throw new errors_1.UnauthorizedError('Authentication required');
+            return res.status(401).json({ message: 'Authentication required' });
         }
-        const notifications = await Notification_1.Notification.find({ recipientClerkUserId: auth.userId }).sort({ createdAt: -1 });
+        const user = await User_1.User.findOne({ clerkUserId: auth.userId });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const query = notification_dto_1.getNotificationsQuerySchema.safeParse(req.query);
+        if (!query.success) {
+            return res.status(400).json({ message: 'Invalid query parameters', errors: query.error.flatten() });
+        }
+        const { unread, type, limit } = query.data;
+        const filter = { recipientId: user._id };
+        if (unread === true)
+            filter['channels.inApp.read'] = false;
+        if (type)
+            filter['type'] = type;
+        const notifications = await Notification_1.default.find(filter)
+            .sort({ createdAt: -1 })
+            .limit(limit ?? 50)
+            .lean();
         res.status(200).json(notifications);
     }
     catch (error) {
         next(error);
     }
 };
-exports.getMyNotifications = getMyNotifications;
-const markNotificationAsRead = async (req, res, next) => {
+exports.getNotificationsForCurrentUser = getNotificationsForCurrentUser;
+const markNotificationRead = async (req, res, next) => {
     try {
         const auth = (0, express_1.getAuth)(req);
         if (!auth.userId) {
-            throw new errors_1.UnauthorizedError('Authentication required');
+            return res.status(401).json({ message: 'Authentication required' });
         }
-        const parsedParams = notification_dto_1.notificationIdParamsSchema.safeParse(req.params);
-        if (!parsedParams.success) {
-            throw new errors_1.ValidationError(JSON.stringify(formatValidationErrors(parsedParams.error)));
+        const params = notification_dto_1.notificationIdParamsSchema.safeParse(req.params);
+        if (!params.success) {
+            return res.status(400).json({ message: 'Invalid notification ID', errors: params.error.flatten() });
         }
-        const notification = await Notification_1.Notification.findOneAndUpdate({
-            _id: parsedParams.data.notificationId,
-            recipientClerkUserId: auth.userId,
-        }, {
-            $set: {
-                isRead: true,
-                readAt: new Date(),
-            },
-        }, { new: true });
+        const user = await User_1.User.findOne({ clerkUserId: auth.userId });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        const notification = await Notification_1.default.findOne({ _id: params.data.notificationId, recipientId: user._id });
         if (!notification) {
-            throw new errors_1.NotFoundError('Notification not found');
+            return res.status(404).json({ message: 'Notification not found' });
         }
+        notification.channels.inApp.read = true;
+        notification.channels.inApp.readAt = new Date();
+        await notification.save();
         res.status(200).json(notification);
     }
     catch (error) {
         next(error);
     }
 };
-exports.markNotificationAsRead = markNotificationAsRead;
-const markAllNotificationsAsRead = async (req, res, next) => {
-    try {
-        const auth = (0, express_1.getAuth)(req);
-        if (!auth.userId) {
-            throw new errors_1.UnauthorizedError('Authentication required');
-        }
-        const result = await Notification_1.Notification.updateMany({
-            recipientClerkUserId: auth.userId,
-            isRead: false,
-        }, {
-            $set: {
-                isRead: true,
-                readAt: new Date(),
-            },
-        });
-        res.status(200).json({ modifiedCount: result.modifiedCount });
-    }
-    catch (error) {
-        next(error);
-    }
-};
-exports.markAllNotificationsAsRead = markAllNotificationsAsRead;
+exports.markNotificationRead = markNotificationRead;
