@@ -9,7 +9,8 @@ import AdminDashboardLayout from "./pages/DashBoards/AdminDashboard/admin-dashbo
 import { TestFeature } from "./pages/DashBoards/AdminDashboard/test.jsx";
 import { DebugAPI } from "./pages/DashBoards/AdminDashboard/debug-api.jsx";
 import { TestOverview } from "./pages/DashBoards/AdminDashboard/test-overview.jsx";
-import { TestAnalytics } from "./pages/DashBoards/AdminDashboard/test-analytics.jsx";
+import { AnalyticsKPI } from "./pages/DashBoards/AdminDashboard/AnalyticsKPI.jsx";
+import { ServiceManagement } from "./pages/DashBoards/AdminDashboard/ServiceManagement.jsx";
 import { TestServices } from "./pages/DashBoards/AdminDashboard/test-services.jsx";
 import TestDiary from "./pages/DashBoards/AdminDashboard/test-diary.jsx";
 import { TestUsers } from "./pages/DashBoards/AdminDashboard/test-users.jsx";
@@ -80,8 +81,8 @@ const ClerkWithRoutes = () => {
             {/* Admin Dashboard Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboardLayout />}>
               <Route index element={<TestOverview />} />
-              <Route path="analytics" element={<TestAnalytics />} />
-              <Route path="services" element={<TestServices />} />
+              <Route path="analytics" element={<AnalyticsKPI />} />
+              <Route path="services" element={<ServiceManagement />} />
               <Route path="referrals" element={<TestFeature />} />
               <Route path="debug" element={<DebugAPI />} />
               <Route path="diary" element={<TestDiary />} />
