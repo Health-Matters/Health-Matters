@@ -21,6 +21,7 @@ export {
   useGetAppointmentsByPractitionerIdQuery,
   useGetAppointmentsByPatientIdQuery,
   useRespondToAppointmentMutation,
+  useCancelAppointmentMutation,
 } from './appointmentsApi';
 
 export {

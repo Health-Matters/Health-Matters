@@ -69,7 +69,7 @@ const ClerkWithRoutes = () => {
       // 4. Force redirects to root 
       signInForceRedirectUrl="/"
       signUpForceRedirectUrl="/"
-    >https://github.com/Health-Matters/Health-Matters/pull/59/conflicts
+    >
       <Routes>
         <Route element={<RootLayout />}>
           <Route path="/sign-in" element={<SignInPage />} />

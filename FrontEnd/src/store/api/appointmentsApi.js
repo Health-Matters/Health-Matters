@@ -22,6 +22,13 @@ export const appointmentsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Appointments', 'Referrals'],
     }),
+    cancelAppointment: builder.mutation({
+      query: ({ appointmentId }) => ({
+        url: `/appointments/${appointmentId}/cancel`,
+        method: 'PUT',
+      }),
+      invalidatesTags: ['Appointments', 'Referrals'],
+    }),
   }),
   overrideExisting: false,
 });
@@ -31,4 +38,5 @@ export const {
   useGetAppointmentsByPractitionerIdQuery,
   useGetAppointmentsByPatientIdQuery,
   useRespondToAppointmentMutation,
+  useCancelAppointmentMutation,
 } = appointmentsApi;

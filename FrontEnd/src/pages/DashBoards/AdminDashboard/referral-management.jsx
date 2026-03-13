@@ -49,6 +49,8 @@ const getAppointmentBadgeClass = (status) => {
       return 'bg-blue-100 text-blue-700 hover:bg-blue-100';
     case 'rejected':
       return 'bg-red-100 text-red-700 hover:bg-red-100';
+    case 'cancelled':
+      return 'bg-rose-100 text-rose-700 hover:bg-rose-100';
     default:
       return 'bg-amber-100 text-amber-700 hover:bg-amber-100';
   }
@@ -108,6 +110,7 @@ export const AdminReferralManagement = () => {
       pending: appointments.filter((appointment) => appointment.status === 'pending').length,
       assigned: appointments.filter((appointment) => appointment.status === 'assigned').length,
       confirmed: appointments.filter((appointment) => appointment.status === 'confirmed').length,
+      cancelled: appointments.filter((appointment) => appointment.status === 'cancelled').length,
     }),
     [appointments]
   );
@@ -175,6 +178,12 @@ export const AdminReferralManagement = () => {
           <CardHeader>
             <CardDescription>Confirmed appointments</CardDescription>
             <CardTitle>{summary.confirmed}</CardTitle>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardDescription>Cancelled appointments</CardDescription>
+            <CardTitle>{summary.cancelled}</CardTitle>
           </CardHeader>
         </Card>
       </div>
