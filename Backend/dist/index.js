@@ -1,4 +1,9 @@
 "use strict";
+import dotenv from "dotenv";
+dotenv.config(); // automatically looks for `.env` in the current working directory
+
+console.log(process.env.MONGO_URI);
+
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };

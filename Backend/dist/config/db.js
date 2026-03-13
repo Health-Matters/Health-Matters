@@ -8,7 +8,7 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const connectDB = async () => {
     try {
         console.log("Connecting to MongoDB");
-        const MONGODB_URI = process.env.MONGODB_URI;
+        const MONGODB_URI = process.env.MONGODB_URL;
         if (!MONGODB_URI) {
             throw new Error("MONGODB_URL is not defined");
         }

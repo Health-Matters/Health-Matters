@@ -1,6 +1,8 @@
+import path from "path";
+import dotenv from "dotenv";
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 import express from 'express';
 import cors from 'cors';
-import dotenv from "dotenv";
 import connectDB from './config/db';
 import userRoutes from './routes/userRoutes';
 import referralRoutes from './routes/referralRoutes';
@@ -9,8 +11,11 @@ import { loggerMiddleware } from './middlewares/logger-middleware';
 import { clerkMiddleware } from '@clerk/express';
 import webHooksRouter from './middlewares/webhooks/webhooks';
 import { globalErrorHandlingMiddleware } from './errors/errors';
+// 1. Import (add near other imports at the top)
+import notificationRoutes from './routes/notificationRoutes';
+
 // Load env vars before using them
-dotenv.config(); 
+console.log("HELLO THERE")
 
 const server = express();
 
@@ -24,7 +29,8 @@ server.use(cors({
 
 // Webhooks (before body parsing)
 server.use("/api/webhooks", webHooksRouter);
-
+// 2. Mount (add with other server.use() calls, before error handler)
+server.use('/api/notifications', notificationRoutes);
 // Middleware
 server.use(express.json());
 server.use(loggerMiddleware);
@@ -38,11 +44,10 @@ server.use(globalErrorHandlingMiddleware);
 // Connect to Database
 connectDB();
 // Start Server
-    const Port = process.env.PORT || 3000;
+    const Port = 3001;
     server.listen(Port, () => {
       console.log(`🚀 Server is running on port ${Port}`);
-      console.log(`📡 API: http://localhost:${Port}`);
+      console.log(`📡 API: http://localhost:3001`);
     });
 
 console.log("Hello world");
-

@@ -57,4 +57,3 @@ export const updateUserByClerkId = async (req: Request, res: Response, next: Nex
     next(error);
   }
 };
-

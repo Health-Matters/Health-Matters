@@ -11,6 +11,8 @@ import {
 } from '../Dtos/referral.dto';
 import { ValidationError, NotFoundError } from '../errors/errors';
 import { getAuth } from '@clerk/express';
+// Add import at the top of referralController.ts
+import { createReferralNotification } from '../services/notificationService';
 
 const formatValidationErrors = (error: ZodError) =>
 	error.issues.map((issue) => ({
@@ -78,6 +80,15 @@ export const createReferral = async (req: Request, res: Response, next: NextFunc
 
 		const newReferral = await Referral.create(parsedBody.data);
 
+		// MGR-007: notify the manager who submitted the referral
+		if (newReferral.submittedByClerkUserId) {
+			await createReferralNotification(
+				newReferral.submittedByClerkUserId,
+				newReferral._id.toString(),
+				'pending'
+			);
+		}
+
 		res.status(201).json(newReferral);
 	} catch (error) {
 		next(error);
@@ -113,7 +124,23 @@ export const updateReferralByPatientId = async (
 			throw new NotFoundError('No referrals found for this patientId');
 		}
 
-		const updatedReferrals = await Referral.find({ patientClerkUserId: patientId }).sort({ createdAt: -1 });
+		const updatedReferrals = await Referral.find({ patientClerkUserId: patientId }).sort({
+			createdAt: -1,
+		});
+
+		// MGR-007: if a status change was included, notify each referral's submitter
+		if (parsedBody.data.referralStatus) {
+			for (const referral of updatedReferrals) {
+				if (referral.submittedByClerkUserId) {
+					await createReferralNotification(
+						referral.submittedByClerkUserId,
+						referral._id.toString(),
+						parsedBody.data.referralStatus
+					);
+				}
+			}
+		}
+
 		res.status(200).json({
 			message: 'Referrals updated successfully',
 			modifiedCount: updateResult.modifiedCount,
@@ -184,6 +211,15 @@ export const assignReferralById = async (req: Request, res: Response, next: Next
 
 		if (!updatedReferral) {
 			throw new NotFoundError('Referral not found');
+		}
+
+		// MGR-007: notify the manager who submitted this referral
+		if (updatedReferral.submittedByClerkUserId) {
+			await createReferralNotification(
+				updatedReferral.submittedByClerkUserId,
+				referralId,
+				'accepted'
+			);
 		}
 
 		res.status(200).json(updatedReferral);
