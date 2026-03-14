@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  useCancelAppointmentMutation,
   useGetAppointmentsByPractitionerIdQuery,
   useGetUsersQuery,
   useRespondToAppointmentMutation,
@@ -27,6 +28,7 @@ export const PractitionerAppointmentsLive = () => {
   } = useGetAppointmentsByPractitionerIdQuery(user?.id, { skip: !user?.id });
   const { data: users = [] } = useGetUsersQuery();
   const [respondToAppointment, { isLoading: isResponding }] = useRespondToAppointmentMutation();
+  const [cancelAppointment, { isLoading: isCancelling }] = useCancelAppointmentMutation();
 
   const usersByClerkId = useMemo(() => {
     const map = new Map();
@@ -40,6 +42,7 @@ export const PractitionerAppointmentsLive = () => {
 
   const assignedAppointments = appointments.filter((appointment) => appointment.status === 'assigned');
   const confirmedAppointments = appointments.filter((appointment) => appointment.status === 'confirmed');
+  const cancelledAppointments = appointments.filter((appointment) => appointment.status === 'cancelled');
 
   const handleResponse = async (appointmentId, status) => {
     try {
@@ -48,6 +51,19 @@ export const PractitionerAppointmentsLive = () => {
       console.error('Failed to update appointment', error);
       alert(error?.data?.message || 'Unable to update appointment.');
     }
+  };
+
+  const handleCancel = async (appointmentId) => {
+    try {
+      await cancelAppointment({ appointmentId }).unwrap();
+    } catch (error) {
+      console.error('Failed to cancel appointment', error);
+      alert(error?.data?.message || 'Unable to cancel appointment.');
+    }
+  };
+
+  const handleAcceptAssignedAppointment = async (appointmentId) => {
+    await handleResponse(appointmentId, 'confirmed');
   };
 
   if (isLoading) {
@@ -70,19 +86,32 @@ export const PractitionerAppointmentsLive = () => {
       <div className="grid gap-4 lg:grid-cols-2">
         <AppointmentSection
           title="Awaiting your response"
-          description="Assigned by admin and waiting for confirmation."
+          description="Assigned by admin and waiting for your acceptance."
           appointments={assignedAppointments}
           usersByClerkId={usersByClerkId}
-          isResponding={isResponding}
+          isResponding={isResponding || isCancelling}
           onRespond={handleResponse}
+          onAccept={handleAcceptAssignedAppointment}
+          onCancel={handleCancel}
           allowResponse
+          allowCancel
         />
         <AppointmentSection
           title="Confirmed appointments"
-          description="Appointments already accepted by you."
+          description="Appointments already accepted by you. Cancel if plans change."
           appointments={confirmedAppointments}
           usersByClerkId={usersByClerkId}
-          isResponding={isResponding}
+          isResponding={isResponding || isCancelling}
+          onRespond={handleResponse}
+          onCancel={handleCancel}
+          allowCancel
+        />
+        <AppointmentSection
+          title="Cancelled appointments"
+          description="History of appointments you or the patient cancelled."
+          appointments={cancelledAppointments}
+          usersByClerkId={usersByClerkId}
+          isResponding={isResponding || isCancelling}
           onRespond={handleResponse}
         />
       </div>
@@ -97,7 +126,10 @@ const AppointmentSection = ({
   usersByClerkId,
   isResponding,
   onRespond,
+  onAccept,
+  onCancel,
   allowResponse = false,
+  allowCancel = false,
 }) => (
   <Card>
     <CardHeader>
@@ -123,7 +155,13 @@ const AppointmentSection = ({
                     Patient: {patient ? getDisplayName(patient) : appointment.patientClerkUserId}
                   </p>
                 </div>
-                <Badge className={appointment.status === 'confirmed' ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100' : 'bg-blue-100 text-blue-700 hover:bg-blue-100'}>
+                <Badge className={
+                  appointment.status === 'confirmed'
+                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100'
+                    : appointment.status === 'cancelled'
+                    ? 'bg-rose-100 text-rose-700 hover:bg-rose-100'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-100'
+                }>
                   {appointment.status}
                 </Badge>
               </div>
@@ -153,11 +191,33 @@ const AppointmentSection = ({
 
               {allowResponse ? (
                 <div className="mt-4 flex gap-3">
-                  <Button disabled={isResponding} onClick={() => onRespond(appointment._id, 'confirmed')}>
-                    Confirm appointment
+                  <Button
+                    disabled={isResponding}
+                    onClick={() => {
+                      if (appointment.assignmentSource === 'admin' && onAccept) {
+                        onAccept(appointment._id);
+                        return;
+                      }
+
+                      onRespond(appointment._id, 'confirmed');
+                    }}
+                  >
+                    {appointment.assignmentSource === 'admin' ? 'Accept appointment' : 'Confirm appointment'}
                   </Button>
                   <Button disabled={isResponding} variant="outline" onClick={() => onRespond(appointment._id, 'rejected')}>
                     Reject
+                  </Button>
+                </div>
+              ) : null}
+
+              {allowCancel ? (
+                <div className="mt-4">
+                  <Button
+                    disabled={isResponding}
+                    className="bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={() => onCancel(appointment._id)}
+                  >
+                    Cancel appointment
                   </Button>
                 </div>
               ) : null}

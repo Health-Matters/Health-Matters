@@ -1,5 +1,6 @@
 import express from 'express';
 import {
+  cancelAppointmentById,
   getAllAppointments,
   getAppointmentByReferralId,
   getAppointmentsByPatientId,
@@ -14,5 +15,6 @@ AppointmentRouter.get('/referral/:referralId', getAppointmentByReferralId);
 AppointmentRouter.get('/patient/:patientId', getAppointmentsByPatientId);
 AppointmentRouter.get('/practitioner/:practitionerId', getAppointmentsByPractitionerId);
 AppointmentRouter.put('/:appointmentId/respond', respondToAppointmentById);
+AppointmentRouter.put('/:appointmentId/cancel', cancelAppointmentById);
 
 export default AppointmentRouter;

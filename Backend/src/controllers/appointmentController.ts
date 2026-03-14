@@ -10,7 +10,7 @@ import {
 } from '../Dtos/appointment.dto';
 import { Appointment } from '../models/Appointment';
 import { Referral } from '../models/Referral';
-import { NotFoundError, UnauthorizedError, ValidationError } from '../errors/errors';
+import { BadRequestError, NotFoundError, UnauthorizedError, ValidationError } from '../errors/errors';
 import {
   confirmAppointmentFromReferral,
   rejectAppointmentFromReferral,
@@ -159,6 +159,54 @@ export const respondToAppointmentById = async (
     await referral.save();
 
     res.status(200).json(updatedAppointment);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const cancelAppointmentById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const auth = getAuth(req);
+
+    if (!auth.userId) {
+      throw new UnauthorizedError('Authentication required');
+    }
+
+    const parsedParams = appointmentIdParamsSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      throw new ValidationError(JSON.stringify(formatValidationErrors(parsedParams.error)));
+    }
+
+    const appointment = await Appointment.findById(parsedParams.data.appointmentId);
+
+    if (!appointment) {
+      throw new NotFoundError('Appointment not found');
+    }
+
+    const allowedUsers = new Set([
+      appointment.patientClerkUserId,
+      appointment.practitionerClerkUserId,
+      appointment.submittedByClerkUserId,
+      appointment.assignedByClerkUserId,
+    ]);
+
+    if (!allowedUsers.has(auth.userId)) {
+      throw new UnauthorizedError('You are not allowed to cancel this appointment');
+    }
+
+    if (appointment.status === 'cancelled') {
+      throw new BadRequestError('Appointment is already cancelled');
+    }
+
+    if (appointment.status === 'completed') {
+      throw new BadRequestError('Completed appointments cannot be cancelled');
+    }
+
+    appointment.status = 'cancelled';
+    appointment.cancelledDate = new Date();
+    await appointment.save();
+
+    res.status(200).json(appointment);
   } catch (error) {
     next(error);
   }
