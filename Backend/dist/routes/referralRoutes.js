@@ -6,20 +6,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const referralController_1 = require("../controllers/referralController");
 const ReferralRouter = express_1.default.Router();
-// GET /api/referrals - Get all referrals
+// GET /api/referrals
 ReferralRouter.get('/', referralController_1.getAllReferrals);
-// GET /api/referrals/patient/:patientId - Get referrals by patientId
+// GET /api/referrals/my-submissions — MGR-005
+// Returns referrals submitted by the authenticated user, derived from Clerk token.
+// No manager ID in the URL — identity is read server-side from the token.
+// Optional query params: status, serviceType, search, dateFrom, dateTo, page, limit
+ReferralRouter.get('/my-submissions', referralController_1.getMySubmittedReferrals);
+// GET /api/referrals/patient/:patientId
 ReferralRouter.get('/patient/:patientId', referralController_1.getReferralsByPatientId);
-// GET /api/referrals/practitioner/:practitionerId - Get referrals by practitionerId
+// GET /api/referrals/practitioner/:practitionerId
 ReferralRouter.get('/practitioner/:practitionerId', referralController_1.getReferralsByPractitionerId);
-// POST /api/referrals - Create a new referral
+// GET /api/referrals/:referralId — MGR-006
+ReferralRouter.get('/:referralId', referralController_1.getReferralById);
+// POST /api/referrals
 ReferralRouter.post('/', referralController_1.createReferral);
-// PUT /api/referrals/patient/:patientId - Update referrals by patientId
+// PUT /api/referrals/patient/:patientId
 ReferralRouter.put('/patient/:patientId', referralController_1.updateReferralByPatientId);
-// DELETE /api/referrals/patient/:patientId - Delete referrals by patientId
+// DELETE /api/referrals/patient/:patientId
 ReferralRouter.delete('/patient/:patientId', referralController_1.deleteReferralByPatientId);
-// PUT /api/referrals/:referralId/assign - Assign practitioner to one referral
+// PUT /api/referrals/:referralId/assign
 ReferralRouter.put('/:referralId/assign', referralController_1.assignReferralById);
-// PUT /api/referrals/:referralId/status - Update referral status
-ReferralRouter.put('/:referralId/status', referralController_1.updateReferralStatus);
 exports.default = ReferralRouter;

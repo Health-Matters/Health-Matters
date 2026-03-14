@@ -36,8 +36,18 @@ const userSchema = new mongoose_1.default.Schema({
     },
     // Employment Information
     department: { type: String, trim: true },
+    managerClerkUserId: { type: String, trim: true },
     // System
     isActive: { type: Boolean, default: true },
+    deletedAt: { type: Date },
+    auditLog: [
+        {
+            action: { type: String, required: true },
+            changedByClerkUserId: { type: String, required: true },
+            timestamp: { type: Date, default: Date.now },
+            changes: { type: mongoose_1.default.Schema.Types.Mixed },
+        },
+    ],
     // Preferences
     preferences: {
         notifications: {
@@ -45,7 +55,7 @@ const userSchema = new mongoose_1.default.Schema({
             sms: { type: Boolean, default: false },
         },
     },
-    clerkUserId: { type: String, required: true, unique: true },
+    clerkUserId: { type: String, unique: true, sparse: true, trim: true },
 }, {
     timestamps: true,
 });

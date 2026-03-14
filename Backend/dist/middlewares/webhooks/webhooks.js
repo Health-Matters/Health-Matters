@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const svix_1 = require("svix");
 const User_1 = require("./../../models/User");
+const express_2 = require("@clerk/express");
 const webhooksRouter = express_1.default.Router();
 webhooksRouter.post("/clerk", 
 // Force Raw Body — must come before express.json() for svix signature verification
@@ -22,7 +23,7 @@ express_1.default.raw({ type: "application/json" }), async (req, res, next) => {
         console.log(`✅ Webhook received: ${eventType}`);
         // ── user.created ────────────────────────────────────────────────────────
         if (eventType === "user.created") {
-            const { id, email_addresses, username, first_name, last_name } = evt.data;
+            const { id, email_addresses, username, first_name, last_name, public_metadata } = evt.data;
             const email = email_addresses?.[0]?.email_address;
             if (!email) {
                 console.warn("⚠️  user.created: no email address in payload, skipping.");
@@ -32,6 +33,32 @@ express_1.default.raw({ type: "application/json" }), async (req, res, next) => {
             const existing = await User_1.User.findOne({ clerkUserId: id });
             if (existing) {
                 console.log(`user.created: user ${id} already exists, skipping.`);
+                return res.status(200).json({ success: true });
+            }
+            // If admin pre-provisioned user by email, link the Clerk account here.
+            const existingByEmail = await User_1.User.findOne({ email });
+            if (existingByEmail) {
+                const updateFields = {
+                    clerkUserId: id,
+                    isActive: true,
+                };
+                if (!existingByEmail.firstName && first_name)
+                    updateFields.firstName = first_name;
+                if (!existingByEmail.lastName && last_name)
+                    updateFields.lastName = last_name;
+                const baseUsername = username || email.split("@")[0];
+                if (!existingByEmail.userName) {
+                    const exists = await User_1.User.findOne({ userName: baseUsername, _id: { $ne: existingByEmail._id } });
+                    updateFields.userName = exists ? `${baseUsername}_${id.slice(-6)}` : baseUsername;
+                }
+                await User_1.User.findByIdAndUpdate(existingByEmail._id, { $set: updateFields }, { new: true, runValidators: true });
+                // Source of truth for onboarding role is the admin-provisioned DB role.
+                if (existingByEmail.role) {
+                    await express_2.clerkClient.users.updateUser(id, {
+                        publicMetadata: { role: existingByEmail.role },
+                    });
+                }
+                console.log(`✅ user.created: linked pre-provisioned user by email (${email}) to Clerk ID ${id}`);
                 return res.status(200).json({ success: true });
             }
             // Build a unique userName — fall back to email prefix, then append
@@ -45,6 +72,7 @@ express_1.default.raw({ type: "application/json" }), async (req, res, next) => {
                 userName: finalUsername,
                 firstName: first_name,
                 lastName: last_name,
+                role: public_metadata?.role || "employee",
             });
             console.log(`✅ user.created: created user ${finalUsername} (${id})`);
         }
@@ -73,7 +101,11 @@ express_1.default.raw({ type: "application/json" }), async (req, res, next) => {
                 console.log(`user.updated: no relevant fields changed for ${id}, skipping DB write.`);
                 return res.status(200).json({ success: true });
             }
-            const updated = await User_1.User.findOneAndUpdate({ clerkUserId: id }, { $set: updateFields }, { new: true, runValidators: true });
+            let updated = await User_1.User.findOneAndUpdate({ clerkUserId: id }, { $set: updateFields }, { new: true, runValidators: true });
+            // If record not linked by Clerk ID yet, fallback to email-based linking.
+            if (!updated && email) {
+                updated = await User_1.User.findOneAndUpdate({ email }, { $set: { ...updateFields, clerkUserId: id } }, { new: true, runValidators: true });
+            }
             if (!updated) {
                 // User not in DB yet — can happen if the webhook fires before user.created is processed
                 console.warn(`user.updated: no DB record found for clerkUserId ${id}`);

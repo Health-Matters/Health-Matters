@@ -4,6 +4,12 @@ export {
   useGetUsersQuery,
   useGetMeQuery,
   useUpdateMeMutation,
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useUpdateUserRoleMutation,
+  useDeactivateUserMutation,
+  useDeleteUserMutation,
+  useAssignUserManagerMutation,
 } from './usersApi';
 
 export {

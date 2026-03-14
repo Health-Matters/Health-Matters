@@ -31,7 +31,7 @@ export const createUserBodySchema = z.object({
   department: z.string().trim().optional(),
   isActive: z.boolean().optional(),
   preferences: userPreferencesSchema.optional(),
-  clerkUserId: z.string().trim().min(1, 'clerkUserId is required'),
+  clerkUserId: z.string().trim().min(1, 'clerkUserId is required').optional(),
 });
 
 export const updateUserBodySchema = createUserBodySchema
@@ -46,4 +46,40 @@ export const getUsersQuerySchema = z.object({
   isActive: z.coerce.boolean().optional(),
   clerkUserId: z.string().trim().optional(),
   email: z.string().trim().email().optional(),
+});
+
+export const userIdParamsSchema = z.object({
+  userId: z.string().trim().min(1, 'userId is required'),
+});
+
+export const updateUserRoleBodySchema = z.object({
+  role: userRoleSchema,
+});
+
+export const createUserByAdminBodySchema = z.object({
+  firstName: z.string().trim().min(1, 'firstName is required'),
+  lastName: z.string().trim().min(1, 'lastName is required'),
+  email: z.string().trim().email(),
+  role: userRoleSchema,
+  phone: z.string().trim().optional(),
+  department: z.string().trim().optional(),
+  userName: z.string().trim().optional(),
+});
+
+export const adminUpdateUserBodySchema = z.object({
+  firstName: z.string().trim().optional(),
+  lastName: z.string().trim().optional(),
+  email: z.string().trim().email().optional(),
+  role: userRoleSchema.optional(),
+  phone: z.string().trim().optional(),
+  department: z.string().trim().optional(),
+  userName: z.string().trim().optional(),
+  managerClerkUserId: z.string().trim().optional(),
+  isActive: z.boolean().optional(),
+}).refine((data) => Object.keys(data).length > 0, {
+  message: 'At least one field is required for update',
+});
+
+export const assignManagerBodySchema = z.object({
+  managerClerkUserId: z.string().trim().min(1, 'managerClerkUserId is required'),
 });

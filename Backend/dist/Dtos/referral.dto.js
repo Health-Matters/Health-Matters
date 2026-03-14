@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateReferralStatusBodySchema = exports.assignReferralBodySchema = exports.updateReferralBodySchema = exports.createReferralBodySchema = exports.referralIdParamsSchema = exports.practitionerIdParamsSchema = exports.patientIdParamsSchema = exports.referralStatusSchema = void 0;
+exports.updateReferralStatusBodySchema = exports.myReferralsQuerySchema = exports.assignReferralBodySchema = exports.updateReferralBodySchema = exports.createReferralBodySchema = exports.referralIdParamsSchema = exports.practitionerIdParamsSchema = exports.patientIdParamsSchema = exports.referralStatusSchema = void 0;
 const zod_1 = require("zod");
 exports.referralStatusSchema = zod_1.z.enum(['pending', 'accepted', 'rejected']);
 const optionalDateSchema = zod_1.z.coerce.date().optional();
@@ -15,7 +15,7 @@ exports.referralIdParamsSchema = zod_1.z.object({
 });
 exports.createReferralBodySchema = zod_1.z.object({
     patientClerkUserId: zod_1.z.string().trim().min(1, 'patientClerkUserId is required'),
-    submittedByClerkUserId: zod_1.z.string().trim().optional(),
+    // submittedByClerkUserId intentionally omitted — always set server-side from Clerk token
     practitionerClerkUserId: zod_1.z.string().trim().optional(),
     serviceType: zod_1.z.string().trim().optional(),
     referralReason: zod_1.z.string().trim().optional(),
@@ -26,6 +26,7 @@ exports.createReferralBodySchema = zod_1.z.object({
     acceptedDate: optionalDateSchema,
     rejectedDate: optionalDateSchema,
     completedDate: optionalDateSchema,
+    isConfidential: zod_1.z.boolean().optional(),
 });
 exports.updateReferralBodySchema = exports.createReferralBodySchema
     .omit({ patientClerkUserId: true })
@@ -35,6 +36,17 @@ exports.updateReferralBodySchema = exports.createReferralBodySchema
 });
 exports.assignReferralBodySchema = zod_1.z.object({
     practitionerClerkUserId: zod_1.z.string().trim().min(1, 'practitionerClerkUserId is required'),
+});
+// MGR-005: query params for filtering/pagination — no managerId field,
+// identity comes from the Clerk token in the controller
+exports.myReferralsQuerySchema = zod_1.z.object({
+    status: exports.referralStatusSchema.optional(),
+    serviceType: zod_1.z.string().trim().optional(),
+    search: zod_1.z.string().trim().optional(),
+    dateFrom: optionalDateSchema,
+    dateTo: optionalDateSchema,
+    page: zod_1.z.coerce.number().int().min(1).default(1),
+    limit: zod_1.z.coerce.number().int().min(1).max(20).default(20),
 });
 exports.updateReferralStatusBodySchema = zod_1.z.object({
     referralStatus: exports.referralStatusSchema,

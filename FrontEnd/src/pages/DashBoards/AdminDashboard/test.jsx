@@ -38,6 +38,9 @@ const formatDate = (value) => {
 export const TestFeature = () => {
   const [selectedReferral, setSelectedReferral] = useState(null);
   const [selectedPractitionerId, setSelectedPractitionerId] = useState("");
+  const [search, setSearch] = useState("");
+  const [sourceFilter, setSourceFilter] = useState({ manager: true, self: true, external: true });
+  const [statusFilter, setStatusFilter] = useState("all");
  
   const {
     data: referrals = [],
@@ -53,6 +56,26 @@ export const TestFeature = () => {
   });
  
   const [assignReferralById, { isLoading: isAssigning }] = useAssignReferralByIdMutation();
+
+  const getReferralSource = (referral) => {
+    const submittedBy = usersByClerkId.get(referral.submittedByClerkUserId);
+    if (!submittedBy) return "external";
+    if (referral.submittedByClerkUserId === referral.patientClerkUserId) return "self";
+    if (submittedBy.role === "manager") return "manager";
+    return "external";
+  };
+
+  const getTriageStatus = (referral) => {
+    if (referral.practitionerClerkUserId) return "appointed";
+    if (referral.referralStatus === "pending") return "pending";
+    return "triage";
+  };
+
+  const statusBadgeClass = {
+    pending: "bg-amber-100 text-amber-700 hover:bg-amber-100",
+    triage: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+    appointed: "bg-emerald-100 text-emerald-700 hover:bg-emerald-100",
+  };
  
   const usersByClerkId = useMemo(() => {
     const map = new Map();
@@ -107,6 +130,32 @@ export const TestFeature = () => {
  
     setSelectedPractitionerId("");
   };
+
+  const filteredReferrals = useMemo(() => {
+    return referrals.filter((referral) => {
+      const source = getReferralSource(referral);
+      const triageStatus = getTriageStatus(referral);
+      const patient = usersByClerkId.get(referral.patientClerkUserId);
+      const submittedBy = usersByClerkId.get(referral.submittedByClerkUserId);
+
+      const searchable = [
+        getFullName(patient),
+        getFullName(submittedBy),
+        referral.patientClerkUserId,
+        referral.serviceType,
+        referral.referralReason,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = searchable.includes(search.toLowerCase());
+      const matchesSource = sourceFilter[source];
+      const matchesStatus = statusFilter === "all" ? true : triageStatus === statusFilter;
+
+      return matchesSearch && matchesSource && matchesStatus;
+    });
+  }, [referrals, search, sourceFilter, statusFilter, usersByClerkId]);
  
   return (
     <div className="space-y-6">
@@ -119,6 +168,49 @@ export const TestFeature = () => {
         </div>
         <Button variant="outline" onClick={refetchReferrals}>Refresh</Button>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Triage Filters</CardTitle>
+          <CardDescription>Filter by source, status, and free-text search.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-4">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search referrals"
+              className="rounded-md border border-slate-300 px-3 py-2 text-sm md:col-span-2"
+            />
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="triage">Triage</SelectItem>
+                <SelectItem value="appointed">Appointed</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center gap-3 text-xs text-slate-700">
+              {["manager", "self", "external"].map((source) => (
+                <label key={source} className="inline-flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    checked={sourceFilter[source]}
+                    onChange={(e) =>
+                      setSourceFilter((prev) => ({ ...prev, [source]: e.target.checked }))
+                    }
+                  />
+                  <span className="capitalize">{source}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
  
       <Card>
         <CardHeader>
@@ -169,17 +261,19 @@ export const TestFeature = () => {
                         Error loading referrals: {referralsError?.data?.message || referralsError?.error || "Unknown error"}
                       </td>
                     </tr>
-                  ) : referrals.length === 0 ? (
+                  ) : filteredReferrals.length === 0 ? (
                     <tr>
                       <td className={`px-4 py-8 text-sm ${tableTheme.cell.text}`} colSpan={7}>
                         No referrals found.
                       </td>
                     </tr>
                   ) : (
-                    referrals.map((referral) => {
+                    filteredReferrals.map((referral) => {
                       const patient = usersByClerkId.get(referral.patientClerkUserId);
                       const practitioner = practitionersByClerkId.get(referral.practitionerClerkUserId);
                       const isAssigned = Boolean(referral.practitionerClerkUserId);
+                      const source = getReferralSource(referral);
+                      const triageStatus = getTriageStatus(referral);
  
                       return (
                         <tr
@@ -197,13 +291,12 @@ export const TestFeature = () => {
                           </td>
                           <td className={`px-4 py-4 text-sm ${tableTheme.cell.text}`}>{formatDate(referral.createdAt)}</td>
                           <td className="px-4 py-4">
-                            <Badge
-                              className={referral.acceptedDate
-                                ? `${commonColors.status.success.bg} ${commonColors.status.success.text} ${commonColors.status.success.hover}`
-                                : `${commonColors.slate[100]} ${commonColors.slate[700]} hover:bg-slate-100`}
-                            >
-                              {referral.acceptedDate ? "Yes" : "No"}
-                            </Badge>
+                            <div className="space-y-1">
+                              <Badge className={statusBadgeClass[triageStatus]}>
+                                {triageStatus}
+                              </Badge>
+                              <p className="text-[11px] capitalize text-slate-500">source: {source}</p>
+                            </div>
                           </td>
                           <td className="px-4 py-4">
                             <Badge

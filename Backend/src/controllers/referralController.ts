@@ -6,6 +6,7 @@ import { ZodError } from 'zod';
 import {
 	assignReferralBodySchema,
 	createReferralBodySchema,
+	myReferralsQuerySchema,
 	patientIdParamsSchema,
 	practitionerIdParamsSchema,
 	referralIdParamsSchema,
@@ -63,21 +64,31 @@ export const getReferralsByPractitionerId = async (
 		}
 
 		const { practitionerId } = parsedParams.data;
-
-    const newReferral = await Referral.create({
-      ...parsedBody.data,
-      submittedByClerkUserId: auth.userId,
-    });
+		const referrals = await Referral.find({ practitionerClerkUserId: practitionerId }).sort({ createdAt: -1 });
+		res.status(200).json(referrals);
+	} catch (error) {
+		next(error);
+	}
+};
 
 export const createReferral = async (req: Request, res: Response, next: NextFunction) => {
 	try {
+		const auth = getAuth(req);
+
+		if (!auth.userId) {
+			throw new UnauthorizedError('Authentication required');
+		}
+
 		const parsedBody = createReferralBodySchema.safeParse(req.body);
 
 		if (!parsedBody.success) {
 			throw new ValidationError(JSON.stringify(formatValidationErrors(parsedBody.error)));
 		}
 
-		const newReferral = await Referral.create(parsedBody.data);
+		const newReferral = await Referral.create({
+			...parsedBody.data,
+			submittedByClerkUserId: auth.userId,
+		});
 
 		// Create an in-app notification confirming the referral submission
 		try {
@@ -375,8 +386,8 @@ export const getReferralById = async (req: Request, res: Response, next: NextFun
     }
 
     // Block manager from viewing confidential self-referrals
-    if (
-      referral.isConfidential &&
+		if (
+			(referral as any).isConfidential &&
       referral.submittedByClerkUserId !== auth.userId &&
       referral.patientClerkUserId !== auth.userId
     ) {
@@ -387,4 +398,56 @@ export const getReferralById = async (req: Request, res: Response, next: NextFun
   } catch (error) {
     next(error);
   }
+};
+
+export const updateReferralStatus = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const parsedParams = referralIdParamsSchema.safeParse(req.params);
+		const parsedBody = updateReferralStatusBodySchema.safeParse(req.body);
+		const auth = getAuth(req);
+
+		if (!parsedParams.success) {
+			throw new ValidationError(JSON.stringify(formatValidationErrors(parsedParams.error)));
+		}
+
+		if (!parsedBody.success) {
+			throw new ValidationError(JSON.stringify(formatValidationErrors(parsedBody.error)));
+		}
+
+		const { referralId } = parsedParams.data;
+		const { referralStatus } = parsedBody.data;
+
+		const dateUpdate: Record<string, Date | undefined> = {
+			acceptedDate: undefined,
+			rejectedDate: undefined,
+			completedDate: undefined,
+		};
+
+		if (referralStatus === 'accepted') {
+			dateUpdate.acceptedDate = new Date();
+		}
+		if (referralStatus === 'rejected') {
+			dateUpdate.rejectedDate = new Date();
+		}
+
+		const updatedReferral = await Referral.findByIdAndUpdate(
+			referralId,
+			{
+				$set: {
+					referralStatus,
+					changedByClerkUserId: auth.userId || undefined,
+					...dateUpdate,
+				},
+			},
+			{ new: true, runValidators: true }
+		);
+
+		if (!updatedReferral) {
+			throw new NotFoundError('Referral not found');
+		}
+
+		res.status(200).json(updatedReferral);
+	} catch (error) {
+		next(error);
+	}
 };

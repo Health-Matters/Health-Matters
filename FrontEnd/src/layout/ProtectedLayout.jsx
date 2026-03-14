@@ -1,5 +1,6 @@
 import { useUser } from "@clerk/clerk-react";
 import { Navigate, Outlet, useLocation } from "react-router";
+import { useGetMeQuery } from "@/store/api";
 
 const roleToPath = {
     admin: "/admin/dashboard",
@@ -12,8 +13,16 @@ export const ProtectedLayout = () => {
     const { isSignedIn, isLoaded, user } = useUser();
     const { pathname } = useLocation();
 
-    const role = user?.publicMetadata?.role;
-    const targetPath = typeof role === "string" ? roleToPath[role] : undefined;
+    const { data: me } = useGetMeQuery(undefined, {
+        skip: !isSignedIn,
+    });
+
+    const clerkRole = typeof user?.publicMetadata?.role === "string"
+        ? user.publicMetadata.role.toLowerCase()
+        : undefined;
+    const dbRole = typeof me?.role === "string" ? me.role.toLowerCase() : undefined;
+    const effectiveRole = clerkRole || dbRole;
+    const targetPath = effectiveRole ? roleToPath[effectiveRole] : undefined;
 
     if (!isLoaded) {
         return null;
