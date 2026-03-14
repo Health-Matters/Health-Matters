@@ -1,373 +1,425 @@
-# Health Matters CRM System
+# Health Matters CRM - Full Project Read Document
+
+## 1. Project Overview
+
+Health Matters is an occupational health CRM platform built with a MERN-based architecture and role-centric workflows for Admins, Managers, Practitioners, and Employees. The system supports referral management, scheduling, notifications, service catalog administration, profile management, and role-based access control with Clerk.
+
+Primary goals:
+- Digitize end-to-end occupational health referral operations
+- Provide role-specific dashboards for operational clarity
+- Enforce secure, auditable, and GDPR-aware data handling
+- Support team-based modular development across Teams A-J
+
+
+## 2. System Architecture (End-to-End)
+
+### 2.1 Three-Tier Architecture
+
+The platform follows a three-tier architecture:
+
+1. Presentation Tier (Frontend)
+- Technology: React (Vite), Tailwind CSS, Redux Toolkit, RTK Query
+- Responsibilities:
+  - Role-based dashboard UI rendering
+  - User interaction and validation
+  - Data presentation (tables, cards, charts, modals)
+  - Triggering API calls via RTK Query hooks
+
+2. Application Tier (Backend API)
+- Technology: Node.js, Express.js, TypeScript
+- Responsibilities:
+  - HTTP routing and controller orchestration
+  - Business rules for referrals, appointments, users, services, notifications, reviews
+  - Authentication and authorization enforcement
+  - Request validation and error handling
+
+3. Data Tier (Database)
+- Technology: MongoDB with Mongoose
+- Responsibilities:
+  - Persist domain entities and workflow states
+  - Maintain role-linked and workflow-linked records
+  - Support analytics snapshots and operational metrics
+
+
+### 2.2 Frontend Architecture
+
+Frontend structure highlights:
+- Entry: Frontend/src/main.jsx
+- Routing: React Router role-based dashboard routes
+- State management:
+  - Global state via Redux Toolkit store
+  - API state via RTK Query
+- API layer files in Frontend/src/store/api:
+  - usersApi.js
+  - referralsApi.js
+  - servicesApi.js
+  - appointmentsApi.js
+  - notificationsApi.js
+  - medicalRecordsApi.js
+  - reviewsApi.js
+- Shared UI components and dashboard-specific page modules
+
+Theme support:
+- Centralized theme state in theme slice
+- Dark mode support integrated in role dashboards
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![MERN Stack](https://img.shields.io/badge/stack-MERN-green.svg)
-![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
-![MongoDB](https://img.shields.io/badge/mongodb-%3E%3D6.0-green.svg)
 
-> A comprehensive Customer Relationship Management system for Health Matters, built using Agile methodologies and the MERN stack.
+### 2.3 Backend Architecture
 
-**Module:** CO2007 - The Agile Professional  
-**Institution:** University of Central Lancashire  
-**Academic Year:** 2025/2026  
-**Team Project:** Collaborative Software Development
+Backend structure highlights:
+- Entry: Backend/src/index.ts
+- Middleware order:
+  1. dotenv
+  2. CORS
+  3. webhooks route
+  4. JSON parser and logger
+  5. Clerk middleware
+  6. feature routers
+  7. global error middleware
+- Core routers:
+  - /api/users
+  - /api/referrals
+  - /api/services
+  - /api/appointments
+  - /api/notifications
+  - /api/medical-records
+  - /api/reviews
 
+Controller pattern:
+- DTO validation with Zod
+- controller-level business logic
+- typed error propagation to global handler
 
-## 🎯 About the Project
 
-The Health Matters CRM is a modular, scalable system designed to streamline healthcare service management. This project is developed as part of the CO2007 module, emphasizing Agile software development practices, teamwork, and professional computing standards.
+### 2.4 Database Design and Relationships
 
-### Project Objectives
+Core collections:
+- users
+- referrals
+- services
+- appointments
+- notifications
+- medical_records
+- reviews
+- analytics_snapshots
 
-- Apply Agile techniques to deliver a team-based software project
-- Develop interoperable modules that integrate seamlessly across teams
-- Implement industry-standard security and compliance measures (GDPR, RBAC)
-- Demonstrate professional software engineering practices
+Key relationship patterns:
+- clerkUserId links application users to Clerk identities
+- referrals link manager/employee/practitioner workflow states
+- appointments reference referral context and participant IDs
+- notifications capture referral/appointment operational events
 
-### Key Stakeholders
 
-- **Employees:** Employees of the organization
-- **Practitioners:** Healthcare professionals providing services
-- **Managers:** Team leads managing referrals and staff
-- **Administrators:** System administrators with full access
+### 2.5 Authentication and RBAC
 
+Authentication:
+- Clerk token-based identity resolution
+- Frontend retrieves session token
+- Backend validates via Clerk middleware
 
-### Installation
+Authorization:
+- requireClerkAuth for protected endpoints
+- requireAdminRole for admin-only operations
+- Identity-derived operations for secure manager/practitioner views
 
-1. **Clone the repository**
 
-```bash
-git clone https://github.com/your-org/health-matters-crm.git
-cd health-matters-crm
-```
+### 2.6 CI/CD (GitHub Actions)
 
-2. **Install dependencies**
+Project delivery model includes GitHub Actions based CI/CD practices:
+- Pull request quality gates
+- Build verification for frontend and backend
+- Deployment-ready automation workflow design
 
-```bash
-# Install backend dependencies
-cd backend
-npm install
 
-# Install frontend dependencies
-cd ../frontend
-npm install
-```
-
-## 🔌 API Endpoints
+## 3. Module Integration
 
-Base URL: `http://localhost:<PORT>/api`
+How modules work together:
 
-All backend routes currently run behind Clerk middleware (`clerkMiddleware()`), so requests should include valid authentication when required by your environment setup.
+- Referrals module
+  - Entry points: manager submissions, employee self-referrals, practitioner referral actions
+  - Feeds scheduling, notifications, and analytics
 
-### User Endpoints
-
-#### 1) Get all users
-
-- **Method:** `GET`
-- **Path:** `/users`
-- **Description:** Returns all users from the database.
-- **Route Handler:** `getAllUsers`
-- **Success Response:** `200 OK` with an array of user objects.
-- **Error Response:** For server errors, request is passed to error middleware.
-
-Example:
-
-```bash
-GET /api/users
-```
-
-#### 2) Update authenticated user
-
-- **Method:** `PUT`
-- **Path:** `/users/me`
-- **Description:** Updates the authenticated user's information using Clerk ID from the authentication token.
-- **Route Handler:** `updateUserByClerkId`
-- **Authentication:** Required - Clerk ID extracted from auth token
-- **Request Body:** Any updatable user fields (at least one required):
-  - `userName` (string)
-  - `firstName` (string)
-  - `lastName` (string)
-  - `phone` (string)
-  - `dateOfBirth` (date)
-  - `password` (string, min 8 chars)
-  - `role` (`admin` | `practitioner` | `manager` | `employee`)
-  - `address` (object with line1, line2, city, postcode)
-  - `department` (string)
-  - `isActive` (boolean)
-  - `preferences` (object)
-- **Note:** `clerkUserId` and `email` cannot be updated
-- **Success Response:** `200 OK` with the updated user object.
-- **Validation/Error Responses:**
-  - `400 Bad Request` if validation fails or no fields provided.
-  - `401 Unauthorized` if not authenticated.
-  - `404 Not Found` if user doesn't exist.
-
-Example:
-
-```bash
-PUT /api/users/me
-Authorization: Bearer <clerk-token>
-Content-Type: application/json
-
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "phone": "07700 900999",
-  "department": "Engineering"
-}
-```
-
----
-
-### Referral Endpoints
-
-#### 1) Get all referrals
-
-- **Method:** `GET`
-- **Path:** `/referrals`
-- **Description:** Returns all referrals, sorted by newest first.
-- **Route Handler:** `getAllReferrals`
-- **Success Response:** `200 OK` with an array of referral objects.
-
-#### 2) Get referrals by patient ID
-
-- **Method:** `GET`
-- **Path:** `/referrals/patient/:patientId`
-- **Description:** Returns all referrals for the specified patient (`patientClerkUserId`).
-- **Route Handler:** `getReferralsByPatientId`
-- **Path Params:**
-	- `patientId` (string, required)
-- **Success Response:** `200 OK` with an array of referral objects.
-- **Validation/Error Responses:**
-	- `400 Bad Request` if `patientId` is missing.
-
-#### 3) Get referrals by practitioner ID
-
-- **Method:** `GET`
-- **Path:** `/referrals/practitioner/:practitionerId`
-- **Description:** Returns all referrals assigned to a practitioner (`practitionerClerkUserId`).
-- **Route Handler:** `getReferralsByPractitionerId`
-- **Path Params:**
-	- `practitionerId` (string, required)
-- **Success Response:** `200 OK` with an array of referral objects.
-- **Validation/Error Responses:**
-	- `400 Bad Request` if `practitionerId` is missing.
-
-#### 4) Create a new referral
-
-- **Method:** `POST`
-- **Path:** `/referrals`
-- **Description:** Creates a new referral record.
-- **Route Handler:** `createReferral`
-- **Required Body Fields:**
-	- `patientClerkUserId` (string)
-- **Optional Body Fields:**
-	- `submittedByClerkUserId` (string)
-	- `practitionerClerkUserId` (string)
-	- `referralReason` (string)
-	- `referralStatus` (`pending` | `accepted` | `rejected`)
-	- `notes` (string)
-	- `assignedbyClerkUserId` (string)
-	- `assignedDate` (date)
-	- `acceptedDate` (date)
-	- `rejectedDate` (date)
-	- `completedDate` (date)
-- **Success Response:** `201 Created` with the created referral object.
-- **Validation/Error Responses:**
-	- `400 Bad Request` if `patientClerkUserId` is missing.
-
-#### 5) Update referrals by patient ID
-
-- **Method:** `PUT`
-- **Path:** `/referrals/patient/:patientId`
-- **Description:** Updates all referrals for the given patient.
-- **Route Handler:** `updateReferralByPatientId`
-- **Path Params:**
-	- `patientId` (string, required)
-- **Request Body:** Any updatable referral fields.
-- **Success Response:** `200 OK` with:
-	- confirmation message,
-	- `modifiedCount`,
-	- updated referrals list.
-- **Validation/Error Responses:**
-	- `400 Bad Request` if `patientId` is missing.
-	- `404 Not Found` if no referrals exist for that patient.
-
-#### 6) Delete referrals by patient ID
-
-- **Method:** `DELETE`
-- **Path:** `/referrals/patient/:patientId`
-- **Description:** Deletes all referrals belonging to the given patient.
-- **Route Handler:** `deleteReferralByPatientId`
-- **Path Params:**
-	- `patientId` (string, required)
-- **Success Response:** `200 OK` with confirmation message and `deletedCount`.
-- **Validation/Error Responses:**
-	- `400 Bad Request` if `patientId` is missing.
-	- `404 Not Found` if no referrals exist for that patient.
-
-Referral examples:
-
-```bash
-# Get all referrals
-GET /api/referrals
-
-# Get by patient
-GET /api/referrals/patient/patient_123
-
-# Get by practitioner
-GET /api/referrals/practitioner/practitioner_123
-
-# Create referral
-POST /api/referrals
-Content-Type: application/json
-
-{
-	"patientClerkUserId": "patient_123",
-	"submittedByClerkUserId": "staff_456",
-	"serviceType": "Physiotherapy Assessment",
-	"referralReason": "Physiotherapy assessment",
-	"referralStatus": "pending",
-	"notes": "Recurring lower back pain"
-}
-```
-
----
-
-### Service Endpoints
-
-#### 1) Get all services
-
-- **Method:** `GET`
-- **Path:** `/services`
-- **Description:** Returns all services, optionally filtered by query parameters.
-- **Route Handler:** `getAllServices`
-- **Query Params (optional):**
-  - `category` (`occupational_health` | `mental_health` | `physiotherapy` | `health_screening` | `counselling` | `ergonomic_assessment`)
-  - `isActive` (boolean)
-  - `name` (string)
-- **Success Response:** `200 OK` with an array of service objects.
-- **Validation/Error Responses:**
-  - `400 Bad Request` if query params fail validation.
-
-#### 2) Get service by ID
-
-- **Method:** `GET`
-- **Path:** `/services/:serviceId`
-- **Description:** Returns a single service by its ID.
-- **Route Handler:** `getServiceById`
-- **Path Params:**
-  - `serviceId` (string, required)
-- **Success Response:** `200 OK` with the service object.
-- **Validation/Error Responses:**
-  - `400 Bad Request` if `serviceId` is missing.
-  - `404 Not Found` if service doesn't exist.
-
-#### 3) Create a new service
-
-- **Method:** `POST`
-- **Path:** `/services`
-- **Description:** Creates a new service record.
-- **Route Handler:** `createService`
-- **Required Body Fields:**
-  - `name` (string)
-- **Optional Body Fields:**
-  - `description` (string)
-  - `category` (enum)
-  - `defaultDuration` (number, 15-240)
-  - `isActive` (boolean)
-- **Success Response:** `201 Created` with the created service object.
-- **Validation/Error Responses:**
-  - `400 Bad Request` if validation fails.
-
-#### 4) Update service by ID
-
-- **Method:** `PUT`
-- **Path:** `/services/:serviceId`
-- **Description:** Updates an existing service.
-- **Route Handler:** `updateServiceById`
-- **Path Params:**
-  - `serviceId` (string, required)
-- **Request Body:** Any updatable service fields (at least one required).
-- **Success Response:** `200 OK` with the updated service object.
-- **Validation/Error Responses:**
-  - `400 Bad Request` if validation fails.
-  - `404 Not Found` if service doesn't exist.
-
-#### 5) Delete service by ID
-
-- **Method:** `DELETE`
-- **Path:** `/services/:serviceId`
-- **Description:** Deletes a service by its ID.
-- **Route Handler:** `deleteServiceById`
-- **Path Params:**
-  - `serviceId` (string, required)
-- **Success Response:** `200 OK` with confirmation message and deleted service.
-- **Validation/Error Responses:**
-  - `400 Bad Request` if `serviceId` is missing.
-  - `404 Not Found` if service doesn't exist.
-
-Service examples:
-
-```bash
-# Get all services
-GET /api/services
-
-# Get services by category
-GET /api/services?category=physiotherapy&isActive=true
-
-# Get service by ID
-GET /api/services/507f1f77bcf86cd799439011
-
-# Create service
-POST /api/services
-Content-Type: application/json
-
-{
-  "name": "Physiotherapy Assessment",
-  "description": "Comprehensive physiotherapy assessment for musculoskeletal conditions",
-  "category": "physiotherapy",
-  "defaultDuration": 60,
-  "isActive": true
-}
-
-# Update service
-PUT /api/services/507f1f77bcf86cd799439011
-Content-Type: application/json
-
-{
-  "description": "Updated description",
-  "isActive": false
-}
-
-# Delete service
-DELETE /api/services/507f1f77bcf86cd799439011
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Health Matters** for providing the requirements and domain expertise
-- **MSc User Experience Students** for conducting stakeholder interviews
-- **CO2007 Module Team** for guidance and support
-- **UCLan** for providing resources and infrastructure
-
-## 📞 Support
-
-For issues, questions, or contributions:
-
-1. **GitHub Issues:** [Create an issue](https://github.com/your-org/health-matters-crm/issues)
-2. **Module Leader:** Contact via Blackboard
-3. **Documentation:** Check `/docs` folder
-
-## 📝 Project Status
-
-**Current Sprint:** Sprint 1 (Foundation & Setup)  
-**Progress:** Module architecture defined, development environment setup in progress  
-**Next Milestone:** Complete authentication system (Sprint 2-3)
-
-**Built with ❤️ by the Health Matters CRM Team**  
-*University of Central Lancashire | CO2007 - The Agile Professional*
+- Appointments module
+  - Consumes referral context
+  - Produces employee/practitioner schedule visibility
+
+- User management module
+  - Provides RBAC and profile workflows
+  - Supports manager-employee relationship mapping
+
+- Services module
+  - Powers referral service selection and admin service governance
+
+- Notifications module
+  - Reflects key workflow state transitions and user alerts
+
+- Medical records metrics module
+  - Supplies access-count metrics for dashboard cards
+
+- Reviews module
+  - Supports practitioner feedback features and rating interactions
+
+
+## 4. Team Contributions (A-J)
+
+This section summarizes each team's backlog implementation contribution and current status context.
+
+### Team A (Manager)
+Implemented:
+- TMA-001: Referral submission on behalf of team member
+- TMA-002: Referral reason and supporting notes
+- TMA-003: Manager referral history tracking
+- TMA-004: Referral details view
+- TMA-005: Backend endpoint integration for manager referrals
+- TMA-006: User-friendly referral workflow and responsive manager UI
+
+Key impact:
+- Established core manager referral workflow from submission to tracking.
+
+
+### Team B (Manager-Focused Features)
+Implemented:
+- TMB-005: Manager personal details update workflow
+- TMB-006: Manager health guidance/advice access flow
+
+Not completed or in progress:
+- TMB-001: Outcome reports with consent-based manager visibility (Not Done)
+- TMB-002: Workplace adjustment action tracking (Not Done)
+- TMB-003: SLA approaching alerts (In Progress)
+- TMB-004: Notification preferences center (Not Done)
+
+Key impact:
+- Delivered profile and guidance foundations; advanced report/alert preferences remain partial.
+
+
+### Team C (Employee)
+Implemented:
+- TMC-001: Self-referral submission form with validation
+- TMC-002: Referral history tracking
+- TMC-003: Past and upcoming appointments visibility
+- TMC-005: Service list visibility (pricing/duration context)
+- TMC-006: Total referral count indicator
+- TMC-007: Pending referral indicator
+
+Not completed:
+- TMC-004: Employee dark/light mode toggle marked To Be Done in backlog context
+
+Key impact:
+- Delivered the primary employee self-service referral and tracking journey.
+
+
+### Team D (Manager Analytics and Alerts)
+Implemented:
+- TMD-001: Referral status notifications for managers
+- TMD-002: Manager cancellation of pending referral with reason
+- TMD-003: Team aggregated health overview
+- TMD-004: SLA compliance stats view
+- TMD-005: In-depth wellbeing analytics view
+
+Backlog placeholders:
+- TMD-006, TMD-007 not specified
+
+Key impact:
+- Added operational awareness, escalation intelligence, and manager analytics layers.
+
+
+### Team E (Employee)
+Implemented:
+- TME-001: Employee notifications page and polling behavior
+- TME-002: Employee profile update and persistence
+- TME-003: Dashboard cards for upcoming appointments and advice access activity
+
+Not completed:
+- TME-004: WCAG AA full contrast compliance marked To Be Done
+- TME-005, TME-006 placeholders
+
+Key impact:
+- Improved employee engagement and dashboard utility through actionable personal data.
+
+
+### Team F (Admin and System Owner)
+Implemented:
+- TMF-001: Admin access to user role management console
+- TMF-002: Filterable user list by role
+- TMF-003: User creation flow
+- TMF-004: User edit flow
+- TMF-005: Centralized referral intake dashboard
+- TMF-006: Security/compliance baseline implementation
+
+Key impact:
+- Established administrative control plane and foundational platform governance.
+
+
+### Team G (Practitioner)
+Implemented:
+- TMG-001: Practitioner appointment list dashboard
+- TMG-002: Practitioner referral handoff flow
+- TMG-003: Practitioner appointment cancellation
+- TMG-004: Appointment performance counters
+- TMG-005: Unified practitioner referral management dashboard
+- TMG-006: Practitioner profile details page
+
+Key impact:
+- Delivered clinician-side workflow execution and oversight capabilities.
+
+
+### Team H (Admin Service Catalog)
+Implemented:
+- TMH-001: Service table overview and management visibility
+- TMH-002: Service creation
+- TMH-003: Service edit updates
+- TMH-004: Service deactivate/archive behavior
+- TMH-005: Service KPI summary cards
+
+Partial:
+- TMH-006: Service categorization/tag taxonomy marked Partial
+
+Key impact:
+- Delivered service catalog lifecycle management required for referral operations.
+
+
+### Team I (Employee Guidance)
+Implemented:
+- TMI-001: Help and Advice page access and referral-linked cards
+- TMI-002: Employee referral list
+- TMI-003: Referral status visibility badges
+- TMI-004: Clinical summary display in referral details
+- TMI-005: General wellbeing guidance while referrals are in progress
+
+Backlog placeholder:
+- TMI-006 unspecified
+
+Key impact:
+- Strengthened employee informational support and transparency.
+
+
+### Team J (Practitioner Reviews and Patients)
+Implemented:
+- TMJ-001: Recent review cards
+- TMJ-002: Review submission form
+- TMJ-003: Star rating interaction
+- TMJ-005: Patient search behavior
+- TMJ-006: Patient detail modal
+- TMJ-007: Patient statistics cards
+
+In progress:
+- TMJ-004: Practitioner patient list management marked In Progress
+
+Key impact:
+- Added practitioner feedback and patient-overview utility features.
+
+
+## 5. Current API Surface Summary
+
+Implemented endpoint groups:
+- Users: profile/admin user lifecycle management
+- Referrals: manager/employee/practitioner referral workflows
+- Services: service catalog CRUD (admin protected for writes)
+- Appointments: employee/practitioner appointment views and practitioner actions
+- Notifications: retrieval and read-state update
+- Medical Records: access count metrics endpoint
+- Reviews: practitioner review read/create
+- Webhooks: Clerk synchronization route
+
+For full endpoint details, refer to:
+- Documentation/api/API_DOCUMENTATION.md
+
+
+## 6. How to Run the Application
+
+### 6.1 Prerequisites
+
+Install:
+- Node.js 18+
+- npm 9+
+- MongoDB (local or cloud URI)
+
+Accounts/services:
+- Clerk project (publishable key, secret key, webhook signing secret)
+
+
+### 6.2 Environment Variables
+
+Backend .env (Backend/.env):
+- PORT=3000
+- MONGODB_URI=<your_mongodb_connection_string>
+- CLERK_SECRET_KEY=<your_clerk_secret_key>
+- CLERK_WEBHOOK_SIGNING_SECRET=<your_clerk_webhook_signing_secret>
+
+Frontend .env (Frontend/.env):
+- VITE_API_BASE_URL=http://localhost:3000/api
+- VITE_CLERK_PUBLISHABLE_KEY=<your_clerk_publishable_key>
+
+
+### 6.3 Install Dependencies
+
+From repository root:
+
+Backend:
+- cd Backend
+- npm install
+
+Frontend:
+- cd ../Frontend
+- npm install
+
+
+### 6.4 Run in Development
+
+Start backend:
+- cd Backend
+- npm run dev
+
+Start frontend:
+- cd Frontend
+- npm run dev
+
+Open:
+- Frontend app: http://localhost:5173
+- Backend API: http://localhost:3000/api
+
+
+### 6.5 Build for Production
+
+Backend build:
+- cd Backend
+- npm run build
+- npm start
+
+Frontend build:
+- cd Frontend
+- npm run build
+- npm run preview
+
+
+### 6.6 Optional Utilities
+
+Database seed:
+- cd Backend
+- npm run seed
+
+Ngrok for webhook/dev tunnel:
+- cd Backend
+- npm run dev:ngrok
+
+
+## 7. Recommended Project Usage Notes
+
+- Keep backend and frontend running in separate terminals
+- Ensure Clerk keys are valid in both backend and frontend env files
+- Keep middleware order intact in backend entry to avoid auth/webhook issues
+- Validate DTO and API docs whenever new endpoints are added
+
+
+## 8. Acknowledgements and Thank You
+
+Thank you to every contributor across Teams A-J for building Health Matters collaboratively.
+
+Your combined frontend, backend, integration, QA, and architecture effort delivered a comprehensive occupational health CRM with meaningful real-world workflows.
+
+Special thanks to:
+- Team leads and contributors for modular feature ownership
+- Everyone who validated integration points across teams
+- All members who helped refine UX, security, and operational reliability
+
+Thank you for your dedication, teamwork, and professionalism.
