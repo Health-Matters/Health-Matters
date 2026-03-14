@@ -36,9 +36,13 @@ import { PractitionerTestAppointments } from "./pages/DashBoards/PractitionerDas
 import { PractitionerTestCreateReferral } from './pages/DashBoards/PractitionerDashboard/test-create-referral.jsx';
 // Import Manager Dashboard
 import ManagerDashboardLayout from "./pages/DashBoards/ManagerDashboard/manager-dashboard-layout.jsx";
-import { ManagerOverview, ManagerReferralSubmission } from "./pages/DashBoards/ManagerDashboard/manager-dashboard-pages.jsx";
-import { ManagerTestTeam } from "./pages/DashBoards/ManagerDashboard/test-team.jsx";
-import { ManagerTestInsights } from "./pages/DashBoards/ManagerDashboard/test-insights.jsx";
+import {
+  ManagerAccessibility,
+  ManagerInsights,
+  ManagerOverview,
+  ManagerReferralSubmission,
+  ManagerTeam,
+} from "./pages/DashBoards/ManagerDashboard/manager-dashboard-content.jsx";
 import { ManagerTestProfile } from "./pages/DashBoards/ManagerDashboard/test-profile.jsx";
 import { ManagerTestBudget } from "./pages/DashBoards/ManagerDashboard/test-budget.jsx";
 import { ClerkProvider } from "@clerk/clerk-react";
@@ -110,11 +114,12 @@ const ClerkWithRoutes = () => {
             {/* Manager Dashboard Routes */}
             <Route path="/manager/dashboard" element={<ManagerDashboardLayout />}>
               <Route index element={<ManagerOverview />} />  
-              <Route path="team" element={<ManagerTestTeam />} />
+              <Route path="team" element={<ManagerTeam />} />
               <Route path="referral" element={<ManagerReferralSubmission />} /> 
-              <Route path="insights" element={<ManagerTestInsights />} />
+              <Route path="insights" element={<ManagerInsights />} />
               <Route path="budget" element={<ManagerTestBudget />} />
               <Route path="profile" element={<ManagerTestProfile />} />
+              <Route path="accessibility" element={<ManagerAccessibility />} />
             </Route>
           </Route>
         </Route>

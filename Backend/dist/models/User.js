@@ -36,6 +36,7 @@ const userSchema = new mongoose_1.default.Schema({
     },
     // Employment Information
     department: { type: String, trim: true },
+    managerClerkUserId: { type: String, trim: true },
     // System
     isActive: { type: Boolean, default: true },
     // Preferences
