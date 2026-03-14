@@ -29,4 +29,8 @@ ReferralRouter.put('/patient/:patientId', referralController_1.updateReferralByP
 ReferralRouter.delete('/patient/:patientId', referralController_1.deleteReferralByPatientId);
 // PUT /api/referrals/:referralId/assign
 ReferralRouter.put('/:referralId/assign', referralController_1.assignReferralById);
+// PUT /api/referrals/:referralId/status
+ReferralRouter.put('/:referralId/status', referralController_1.updateReferralStatus);
+// PUT /api/referrals/:referralId/cancel
+ReferralRouter.put('/:referralId/cancel', referralController_1.cancelReferralByManager);
 exports.default = ReferralRouter;

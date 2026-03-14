@@ -1,8 +1,16 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateReferralStatusBodySchema = exports.myReferralsQuerySchema = exports.assignReferralBodySchema = exports.updateReferralBodySchema = exports.createReferralBodySchema = exports.referralIdParamsSchema = exports.practitionerIdParamsSchema = exports.patientIdParamsSchema = exports.referralStatusSchema = void 0;
+exports.cancelReferralBodySchema = exports.updateReferralStatusBodySchema = exports.myReferralsQuerySchema = exports.assignReferralBodySchema = exports.updateReferralBodySchema = exports.createReferralBodySchema = exports.referralIdParamsSchema = exports.practitionerIdParamsSchema = exports.patientIdParamsSchema = exports.referralStatusSchema = void 0;
 const zod_1 = require("zod");
-exports.referralStatusSchema = zod_1.z.enum(['pending', 'accepted', 'rejected']);
+exports.referralStatusSchema = zod_1.z.enum([
+    'pending',
+    'assigned',
+    'in_progress',
+    'completed',
+    'cancelled',
+    'accepted',
+    'rejected',
+]);
 const optionalDateSchema = zod_1.z.coerce.date().optional();
 exports.patientIdParamsSchema = zod_1.z.object({
     patientId: zod_1.z.string().trim().min(1, 'patientId is required'),
@@ -50,4 +58,7 @@ exports.myReferralsQuerySchema = zod_1.z.object({
 });
 exports.updateReferralStatusBodySchema = zod_1.z.object({
     referralStatus: exports.referralStatusSchema,
+});
+exports.cancelReferralBodySchema = zod_1.z.object({
+    reason: zod_1.z.string().trim().min(1, 'Cancellation reason is required'),
 });

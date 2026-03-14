@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateReferralStatus = exports.getReferralById = exports.getMySubmittedReferrals = exports.assignReferralById = exports.deleteReferralByPatientId = exports.updateReferralByPatientId = exports.createReferral = exports.getReferralsByPractitionerId = exports.getReferralsByPatientId = exports.getAllReferrals = void 0;
+exports.updateReferralStatus = exports.getReferralById = exports.getMySubmittedReferrals = exports.cancelReferralByManager = exports.assignReferralById = exports.deleteReferralByPatientId = exports.updateReferralByPatientId = exports.createReferral = exports.getReferralsByPractitionerId = exports.getReferralsByPatientId = exports.getAllReferrals = void 0;
 const Referral_1 = require("../models/Referral");
 const Notification_1 = __importDefault(require("../models/Notification"));
 const User_1 = require("../models/User");
@@ -14,6 +14,49 @@ const formatValidationErrors = (error) => error.issues.map((issue) => ({
     field: issue.path.join('.'),
     message: issue.message,
 }));
+const STATUS_NOTIFICATION_LABELS = {
+    assigned: 'Assigned',
+    in_progress: 'In Progress',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+};
+const shouldNotifyManagerStatusChange = (status) => status === 'assigned' || status === 'in_progress' || status === 'completed' || status === 'cancelled';
+const buildNotificationChannels = (recipient) => {
+    const emailEnabled = recipient?.preferences?.notifications?.email ?? true;
+    const smsEnabled = recipient?.preferences?.notifications?.sms ?? false;
+    return {
+        email: { sent: !emailEnabled },
+        sms: { sent: !smsEnabled },
+        inApp: { read: false },
+    };
+};
+const createReferralNotification = async (recipient, title, message, referralId, priority = 'medium') => {
+    if (!recipient)
+        return;
+    await Notification_1.default.create({
+        recipientId: recipient._id,
+        type: 'referral_triaged',
+        title,
+        message,
+        relatedEntityType: 'referral',
+        relatedEntityId: referralId,
+        channels: buildNotificationChannels(recipient),
+        priority,
+    });
+};
+const notifyManagerOnStatusChange = async (referral) => {
+    if (!shouldNotifyManagerStatusChange(referral.referralStatus)) {
+        return;
+    }
+    const manager = await User_1.User.findOne({ clerkUserId: referral.submittedByClerkUserId });
+    if (!manager) {
+        return;
+    }
+    const referralIdShort = `#${String(referral._id).slice(-6).toUpperCase()}`;
+    const statusLabel = STATUS_NOTIFICATION_LABELS[referral.referralStatus] ?? referral.referralStatus;
+    const deepLink = `/manager/dashboard/referral?referralId=${String(referral._id)}`;
+    await createReferralNotification(manager, `Referral ${statusLabel}`, `Referral ${referralIdShort} is now ${statusLabel.toLowerCase()}. Open: ${deepLink}`, referral._id, referral.referralStatus === 'cancelled' ? 'high' : 'medium');
+};
 const getAllReferrals = async (req, res, next) => {
     try {
         console.log('🔵 GET /api/referrals - Fetching all referrals');
@@ -225,6 +268,7 @@ const assignReferralById = async (req, res, next) => {
         const updatedReferral = await Referral_1.Referral.findByIdAndUpdate(referralId, {
             $set: {
                 practitionerClerkUserId,
+                referralStatus: 'assigned',
                 assignedDate: new Date(),
                 assignedbyClerkUserId: auth.userId || undefined,
             },
@@ -258,6 +302,12 @@ const assignReferralById = async (req, res, next) => {
         catch (notificationError) {
             console.error('Failed to create referral assignment notification:', notificationError);
         }
+        try {
+            await notifyManagerOnStatusChange(updatedReferral);
+        }
+        catch (notificationError) {
+            console.error('Failed to notify manager on assignment:', notificationError);
+        }
         res.status(200).json(updatedReferral);
     }
     catch (error) {
@@ -265,6 +315,62 @@ const assignReferralById = async (req, res, next) => {
     }
 };
 exports.assignReferralById = assignReferralById;
+const cancelReferralByManager = async (req, res, next) => {
+    try {
+        const parsedParams = referral_dto_1.referralIdParamsSchema.safeParse(req.params);
+        const parsedBody = referral_dto_1.cancelReferralBodySchema.safeParse(req.body);
+        const auth = (0, express_1.getAuth)(req);
+        if (!auth.userId) {
+            throw new errors_1.UnauthorizedError('Authentication required');
+        }
+        if (!parsedParams.success) {
+            throw new errors_1.ValidationError(JSON.stringify(formatValidationErrors(parsedParams.error)));
+        }
+        if (!parsedBody.success) {
+            throw new errors_1.ValidationError(JSON.stringify(formatValidationErrors(parsedBody.error)));
+        }
+        const { referralId } = parsedParams.data;
+        const { reason } = parsedBody.data;
+        const referral = await Referral_1.Referral.findById(referralId);
+        if (!referral) {
+            throw new errors_1.NotFoundError('Referral not found');
+        }
+        if (referral.submittedByClerkUserId !== auth.userId) {
+            throw new errors_1.UnauthorizedError('You can only cancel referrals submitted by you');
+        }
+        if (referral.referralStatus !== 'pending') {
+            throw new errors_1.BadRequestError('Referral can only be cancelled while pending');
+        }
+        referral.referralStatus = 'cancelled';
+        referral.cancellationReason = reason;
+        referral.cancelledDate = new Date();
+        referral.changedByClerkUserId = auth.userId;
+        await referral.save();
+        const [employee, manager, admins] = await Promise.all([
+            User_1.User.findOne({ clerkUserId: referral.patientClerkUserId }),
+            User_1.User.findOne({ clerkUserId: referral.submittedByClerkUserId }),
+            User_1.User.find({ role: 'admin', isActive: true }).limit(20),
+        ]);
+        const referralIdShort = `#${String(referral._id).slice(-6).toUpperCase()}`;
+        const managerName = `${manager?.firstName ?? ''} ${manager?.lastName ?? ''}`.trim() || 'Manager';
+        const deepLink = `/manager/dashboard/referral?referralId=${String(referral._id)}`;
+        if (employee) {
+            await createReferralNotification(employee, 'Referral Cancelled', `A referral (${referralIdShort}) created on your behalf was cancelled by ${managerName}. Reason: ${reason}`, referral._id, 'high');
+        }
+        await Promise.all(admins.map((admin) => createReferralNotification(admin, 'Manager Referral Cancelled', `${managerName} cancelled referral ${referralIdShort}. Reason: ${reason}. Open: ${deepLink}`, referral._id, 'high')));
+        try {
+            await notifyManagerOnStatusChange(referral);
+        }
+        catch (notificationError) {
+            console.error('Failed to notify manager after cancellation:', notificationError);
+        }
+        res.status(200).json(referral);
+    }
+    catch (error) {
+        next(error);
+    }
+};
+exports.cancelReferralByManager = cancelReferralByManager;
 // MGR-005: Get referrals submitted by the currently authenticated manager.
 // SECURITY: Manager identity is derived from the Clerk token — no ID in the URL.
 const getMySubmittedReferrals = async (req, res, next) => {
@@ -357,16 +463,32 @@ const updateReferralStatus = async (req, res, next) => {
         }
         const { referralId } = parsedParams.data;
         const { referralStatus } = parsedBody.data;
+        const existingReferral = await Referral_1.Referral.findById(referralId);
+        if (!existingReferral) {
+            throw new errors_1.NotFoundError('Referral not found');
+        }
+        const previousStatus = existingReferral.referralStatus;
         const dateUpdate = {
             acceptedDate: undefined,
             rejectedDate: undefined,
             completedDate: undefined,
+            assignedDate: undefined,
+            cancelledDate: undefined,
         };
         if (referralStatus === 'accepted') {
             dateUpdate.acceptedDate = new Date();
         }
         if (referralStatus === 'rejected') {
             dateUpdate.rejectedDate = new Date();
+        }
+        if (referralStatus === 'assigned') {
+            dateUpdate.assignedDate = new Date();
+        }
+        if (referralStatus === 'completed') {
+            dateUpdate.completedDate = new Date();
+        }
+        if (referralStatus === 'cancelled') {
+            dateUpdate.cancelledDate = new Date();
         }
         const updatedReferral = await Referral_1.Referral.findByIdAndUpdate(referralId, {
             $set: {
@@ -377,6 +499,14 @@ const updateReferralStatus = async (req, res, next) => {
         }, { new: true, runValidators: true });
         if (!updatedReferral) {
             throw new errors_1.NotFoundError('Referral not found');
+        }
+        if (previousStatus !== updatedReferral.referralStatus) {
+            try {
+                await notifyManagerOnStatusChange(updatedReferral);
+            }
+            catch (notificationError) {
+                console.error('Failed to notify manager on referral status change:', notificationError);
+            }
         }
         res.status(200).json(updatedReferral);
     }
