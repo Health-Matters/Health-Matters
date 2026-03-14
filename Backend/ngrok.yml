@@ -1,0 +1,8 @@
+version: 3
+agent:
+  authtoken: 37vAESAAHGabBw74JqdnblwSVNn_7Ae9fYeihXRhd4RZq1Ltp
+endpoints:
+  - name: Health-Matters-Backend
+    url: linh-unschematised-flightily.ngrok-free.dev
+    upstream:
+      url: http://localhost:3000
