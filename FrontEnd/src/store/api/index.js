@@ -40,6 +40,13 @@ export {
 } from './notificationsApi';
 
 export {
+  useGetAppointmentsByEmployeeIdQuery,
+  useGetAppointmentsByPractitionerIdQuery,
+  useRespondToAppointmentMutation,
+  useCancelAppointmentMutation,
+} from './appointmentsApi';
+
+export {
   useGetReviewsQuery,
   useCreateReviewMutation,
 } from './reviewsApi';

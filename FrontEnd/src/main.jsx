@@ -33,7 +33,7 @@ import { PractitionerTestPatients } from "./pages/DashBoards/PractitionerDashboa
 import { PractitionerTestReviews } from "./pages/DashBoards/PractitionerDashboard/test-reviews.jsx";
 import { PractitionerReviewsLearnMore } from "./pages/DashBoards/PractitionerDashboard/test-reviews-learn-more.jsx";
 import { PractitionerTestProfile } from "./pages/DashBoards/PractitionerDashboard/test-profile.jsx";
-import { PractitionerTestAppointments } from "./pages/DashBoards/PractitionerDashboard/test-appointments.jsx";
+import { PractitionerAppointmentsLive } from "./pages/DashBoards/PractitionerDashboard/appointments-live.jsx";
 import { PractitionerTestCreateReferral } from './pages/DashBoards/PractitionerDashboard/test-create-referral.jsx';
 // Import Manager Dashboard
 import ManagerDashboardLayout from "./pages/DashBoards/ManagerDashboard/manager-dashboard-layout.jsx";
@@ -104,7 +104,7 @@ const ClerkWithRoutes = () => {
               <Route path="patients" element={<PractitionerTestPatients />} />
               <Route path="reviews" element={<PractitionerTestReviews />} />
               <Route path="reviews/learn-more" element={<PractitionerReviewsLearnMore />} />
-              <Route path="appointments" element={<PractitionerTestAppointments />} />
+              <Route path="appointments" element={<PractitionerAppointmentsLive />} />
               <Route path="profile" element={<PractitionerTestProfile />} />
               <Route path='create_referral' element={ <PractitionerTestCreateReferral /> } />
             </Route>

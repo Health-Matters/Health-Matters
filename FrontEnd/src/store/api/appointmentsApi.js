@@ -13,22 +13,21 @@ export const appointmentsApi = baseApi.injectEndpoints({
       providesTags: ['Appointments'],
     }),
 
-    createAppointment: builder.mutation({
-      query: (body) => ({
-        url: '/appointments',
-        method: 'POST',
-        body
+    respondToAppointment: builder.mutation({
+      query: ({ appointmentId, status }) => ({
+        url: `/appointments/${appointmentId}/respond`,
+        method: 'PATCH',
+        body: { status },
       }),
-      invalidatesTags: ['Appointments']
+      invalidatesTags: ['Appointments'],
     }),
 
-    updateAppointmentStatus: builder.mutation({
-      query: ({ appointmentId, body }) => ({
-        url: `/appointments/${appointmentId}`,
-        method: 'PUT',
-        body
+    cancelAppointment: builder.mutation({
+      query: ({ appointmentId }) => ({
+        url: `/appointments/${appointmentId}/cancel`,
+        method: 'PATCH',
       }),
-      invalidatesTags: ['Appointments']
+      invalidatesTags: ['Appointments'],
     }),
 
   }),
@@ -38,6 +37,6 @@ export const appointmentsApi = baseApi.injectEndpoints({
 export const {
   useGetAppointmentsByEmployeeIdQuery,
   useGetAppointmentsByPractitionerIdQuery,
-  useCreateAppointmentMutation,
-  useUpdateAppointmentStatusMutation
+  useRespondToAppointmentMutation,
+  useCancelAppointmentMutation,
 } = appointmentsApi;
