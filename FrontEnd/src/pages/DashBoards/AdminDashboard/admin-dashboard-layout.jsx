@@ -3,7 +3,6 @@ import { Outlet, useLocation } from "react-router";
 import {
   Home,
   TriangleAlert,
-  BookOpen,
   Users,
   Settings,
   ChevronsUpDown,
@@ -46,11 +45,6 @@ const items = [
     title: "Referrals",
     url: "/admin/dashboard/referrals",
     icon: TriangleAlert,
-  },
-  {
-    title: "Diary",
-    url: "/admin/dashboard/diary",
-    icon: BookOpen,
   },
   {
     title: "Users",

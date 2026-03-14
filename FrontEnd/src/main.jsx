@@ -12,7 +12,6 @@ import { TestOverview } from "./pages/DashBoards/AdminDashboard/test-overview.js
 import { AnalyticsKPI } from "./pages/DashBoards/AdminDashboard/AnalyticsKPI.jsx";
 import { ServiceManagement } from "./pages/DashBoards/AdminDashboard/ServiceManagement.jsx";
 import { TestServices } from "./pages/DashBoards/AdminDashboard/test-services.jsx";
-import TestDiary from "./pages/DashBoards/AdminDashboard/test-diary.jsx";
 import { TestUsers } from "./pages/DashBoards/AdminDashboard/test-users.jsx";
 import { TestSettings } from "./pages/DashBoards/AdminDashboard/test-settings.jsx";
 // Import Employee Dashboard
@@ -85,7 +84,6 @@ const ClerkWithRoutes = () => {
               <Route path="services" element={<ServiceManagement />} />
               <Route path="referrals" element={<TestFeature />} />
               <Route path="debug" element={<DebugAPI />} />
-              <Route path="diary" element={<TestDiary />} />
               <Route path="users" element={<TestUsers />} />
               <Route path="settings" element={<TestSettings />} />
             </Route>
