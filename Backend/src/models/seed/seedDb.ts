@@ -494,6 +494,50 @@ const referrals = [
   },
 ];
 
+const seedUsersIfMissing = async () => {
+  for (const user of users) {
+    const existingUser = await User.findOne({ clerkUserId: user.clerkUserId });
+    if (!existingUser) {
+      await User.create(user);
+    }
+  }
+
+  return User.find({ clerkUserId: { $in: users.map((user) => user.clerkUserId) } });
+};
+
+const seedServicesIfMissing = async () => {
+  for (const service of services) {
+    const existingService = await Service.findOne({ code: service.code });
+    if (!existingService) {
+      await Service.create(service);
+    }
+  }
+};
+
+const seedReferralsIfMissing = async () => {
+  for (const referral of referrals) {
+    const existingReferral = await Referral.findOne({
+      patientClerkUserId: referral.patientClerkUserId,
+      submittedByClerkUserId: referral.submittedByClerkUserId,
+      serviceType: referral.serviceType,
+      createdAt: referral.createdAt,
+    });
+
+    if (!existingReferral) {
+      await Referral.create(referral);
+    }
+  }
+
+  return Referral.find({
+    $or: referrals.map((referral) => ({
+      patientClerkUserId: referral.patientClerkUserId,
+      submittedByClerkUserId: referral.submittedByClerkUserId,
+      serviceType: referral.serviceType,
+      createdAt: referral.createdAt,
+    })),
+  });
+};
+
 const seedDatabase = async () => {
   try {
     if (!process.env.MONGODB_URI) {
@@ -503,18 +547,9 @@ const seedDatabase = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
     console.log("✅ Connected to MongoDB");
 
-    await Promise.all([
-      Notification.deleteMany({}),
-      Appointment.deleteMany({}),
-      MedicalRecord.deleteMany({}),
-      Referral.deleteMany({}),
-      Service.deleteMany({}),
-      User.deleteMany({}),
-    ]);
-
-    const createdUsers = await User.insertMany(users);
-    await Service.insertMany(services);
-    const createdReferrals = await Referral.insertMany(referrals);
+    const createdUsers = await seedUsersIfMissing();
+    await seedServicesIfMissing();
+    const createdReferrals = await seedReferralsIfMissing();
 
     const userByClerkId = createdUsers.reduce<Record<string, (typeof createdUsers)[number]>>((accumulator, user) => {
       accumulator[user.clerkUserId] = user;
@@ -589,12 +624,24 @@ const seedDatabase = async () => {
       },
     ];
 
-    await Notification.insertMany(notifications);
+    for (const notification of notifications) {
+      const existingNotification = await Notification.findOne({
+          recipientId: notification.recipientId,
+          type: notification.type,
+          title: notification.title,
+          relatedEntityId: notification.relatedEntityId,
+          createdAt: notification.createdAt,
+      });
 
-    console.log(`🌱 Seeded ${createdUsers.length} users`);
-    console.log(`🌱 Seeded ${services.length} services`);
-    console.log(`🌱 Seeded ${createdReferrals.length} referrals`);
-    console.log(`🌱 Seeded ${notifications.length} notifications`);
+      if (!existingNotification) {
+        await Notification.create(notification);
+      }
+    }
+
+    console.log(`🌱 Ensured ${createdUsers.length} seeded users exist`);
+    console.log(`🌱 Ensured ${services.length} seeded services exist`);
+    console.log(`🌱 Ensured ${createdReferrals.length} seeded referrals exist`);
+    console.log(`🌱 Ensured ${notifications.length} seeded notifications exist`);
 
     await mongoose.disconnect();
     console.log("✨ Database seeded successfully");

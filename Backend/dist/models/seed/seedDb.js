@@ -9,8 +9,6 @@ const User_1 = require("./../User");
 const Referral_1 = require("./../Referral");
 const Service_1 = __importDefault(require("./../Service"));
 const Notification_1 = __importDefault(require("./../Notification"));
-const Appointment_1 = __importDefault(require("./../Appointment"));
-const MedicalRecord_1 = __importDefault(require("./../MedicalRecord"));
 dotenv_1.default.config();
 const buildHistory = (entries) => entries.map((entry) => ({
     ...entry,
@@ -492,6 +490,44 @@ const referrals = [
         updatedAt: new Date("2025-05-30T15:00:00.000Z"),
     },
 ];
+const seedUsersIfMissing = async () => {
+    for (const user of users) {
+        const existingUser = await User_1.User.findOne({ clerkUserId: user.clerkUserId });
+        if (!existingUser) {
+            await User_1.User.create(user);
+        }
+    }
+    return User_1.User.find({ clerkUserId: { $in: users.map((user) => user.clerkUserId) } });
+};
+const seedServicesIfMissing = async () => {
+    for (const service of services) {
+        const existingService = await Service_1.default.findOne({ code: service.code });
+        if (!existingService) {
+            await Service_1.default.create(service);
+        }
+    }
+};
+const seedReferralsIfMissing = async () => {
+    for (const referral of referrals) {
+        const existingReferral = await Referral_1.Referral.findOne({
+            patientClerkUserId: referral.patientClerkUserId,
+            submittedByClerkUserId: referral.submittedByClerkUserId,
+            serviceType: referral.serviceType,
+            createdAt: referral.createdAt,
+        });
+        if (!existingReferral) {
+            await Referral_1.Referral.create(referral);
+        }
+    }
+    return Referral_1.Referral.find({
+        $or: referrals.map((referral) => ({
+            patientClerkUserId: referral.patientClerkUserId,
+            submittedByClerkUserId: referral.submittedByClerkUserId,
+            serviceType: referral.serviceType,
+            createdAt: referral.createdAt,
+        })),
+    });
+};
 const seedDatabase = async () => {
     try {
         if (!process.env.MONGODB_URI) {
@@ -499,17 +535,9 @@ const seedDatabase = async () => {
         }
         await mongoose_1.default.connect(process.env.MONGODB_URI);
         console.log("✅ Connected to MongoDB");
-        await Promise.all([
-            Notification_1.default.deleteMany({}),
-            Appointment_1.default.deleteMany({}),
-            MedicalRecord_1.default.deleteMany({}),
-            Referral_1.Referral.deleteMany({}),
-            Service_1.default.deleteMany({}),
-            User_1.User.deleteMany({}),
-        ]);
-        const createdUsers = await User_1.User.insertMany(users);
-        await Service_1.default.insertMany(services);
-        const createdReferrals = await Referral_1.Referral.insertMany(referrals);
+        const createdUsers = await seedUsersIfMissing();
+        await seedServicesIfMissing();
+        const createdReferrals = await seedReferralsIfMissing();
         const userByClerkId = createdUsers.reduce((accumulator, user) => {
             accumulator[user.clerkUserId] = user;
             return accumulator;
@@ -580,11 +608,22 @@ const seedDatabase = async () => {
                 updatedAt: new Date("2026-02-05T09:00:00.000Z"),
             },
         ];
-        await Notification_1.default.insertMany(notifications);
-        console.log(`🌱 Seeded ${createdUsers.length} users`);
-        console.log(`🌱 Seeded ${services.length} services`);
-        console.log(`🌱 Seeded ${createdReferrals.length} referrals`);
-        console.log(`🌱 Seeded ${notifications.length} notifications`);
+        for (const notification of notifications) {
+            const existingNotification = await Notification_1.default.findOne({
+                recipientId: notification.recipientId,
+                type: notification.type,
+                title: notification.title,
+                relatedEntityId: notification.relatedEntityId,
+                createdAt: notification.createdAt,
+            });
+            if (!existingNotification) {
+                await Notification_1.default.create(notification);
+            }
+        }
+        console.log(`🌱 Ensured ${createdUsers.length} seeded users exist`);
+        console.log(`🌱 Ensured ${services.length} seeded services exist`);
+        console.log(`🌱 Ensured ${createdReferrals.length} seeded referrals exist`);
+        console.log(`🌱 Ensured ${notifications.length} seeded notifications exist`);
         await mongoose_1.default.disconnect();
         console.log("✨ Database seeded successfully");
         process.exit(0);
