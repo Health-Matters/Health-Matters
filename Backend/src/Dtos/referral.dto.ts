@@ -53,6 +53,24 @@ export const assignReferralBodySchema = z.object({
   practitionerClerkUserId: z.string().trim().min(1, 'practitionerClerkUserId is required'),
 });
 
+export const cancelReferralBodySchema = z.object({
+  cancellationReason: z.string().trim().min(1, 'cancellationReason is required'),
+});
+
+export const managerDashboardQuerySchema = z.object({
+  dateFrom: optionalDateSchema,
+  dateTo: optionalDateSchema,
+});
+
+export const managerInsightsQuerySchema = managerDashboardQuerySchema.extend({
+  months: z
+    .coerce
+    .number()
+    .int()
+    .refine((value) => [3, 6, 12].includes(value), 'months must be one of 3, 6, or 12')
+    .default(12),
+});
+
 // MGR-005: query params for filtering/pagination — no managerId field,
 // identity comes from the Clerk token in the controller
 export const myReferralsQuerySchema = z.object({

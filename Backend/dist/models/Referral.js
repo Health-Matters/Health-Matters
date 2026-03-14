@@ -5,14 +5,25 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Referral = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
+const statusHistorySchema = new mongoose_1.default.Schema({
+    status: {
+        type: String,
+        enum: ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'],
+        required: true,
+    },
+    changedByClerkUserId: { type: String },
+    note: { type: String, trim: true },
+    changedAt: { type: Date, default: Date.now },
+}, { _id: false });
 const referralSchema = new mongoose_1.default.Schema({
     patientClerkUserId: { type: String, required: true },
     submittedByClerkUserId: { type: String },
     practitionerClerkUserId: { type: String },
+    serviceType: { type: String, trim: true },
     referralReason: { type: String, trim: true },
     referralStatus: {
         type: String,
-        enum: ['pending', 'accepted', 'rejected'],
+        enum: ['pending', 'accepted', 'rejected', 'in_progress', 'completed', 'cancelled'],
         default: 'pending',
     },
     notes: { type: String, trim: true },
@@ -21,6 +32,11 @@ const referralSchema = new mongoose_1.default.Schema({
     acceptedDate: { type: Date },
     rejectedDate: { type: Date },
     completedDate: { type: Date },
+    cancelledAt: { type: Date },
+    cancelledByClerkUserId: { type: String },
+    cancellationReason: { type: String, trim: true },
+    isConfidential: { type: Boolean, default: false },
+    statusHistory: { type: [statusHistorySchema], default: [] },
 }, {
     timestamps: true,
 });

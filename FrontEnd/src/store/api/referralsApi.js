@@ -19,7 +19,28 @@ export const referralsApi = baseApi.injectEndpoints({
         url: '/referrals/my-submissions',
         params,
       }),
-      providesTags: ['Referrals'],
+      providesTags: ['Referrals', 'ManagerReferrals'],
+    }),
+
+    getManagerDashboard: builder.query({
+      query: (params = {}) => ({
+        url: '/referrals/manager/dashboard',
+        params,
+      }),
+      providesTags: ['ManagerStats', 'ManagerReferrals'],
+    }),
+
+    getManagerTeam: builder.query({
+      query: () => '/referrals/manager/team',
+      providesTags: ['ManagerTeam'],
+    }),
+
+    getManagerInsights: builder.query({
+      query: (params = {}) => ({
+        url: '/referrals/manager/insights',
+        params,
+      }),
+      providesTags: ['ManagerStats'],
     }),
 
     // GET /api/referrals/patient/:patientId
@@ -49,7 +70,7 @@ export const referralsApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Referrals'],
+      invalidatesTags: ['Referrals', 'ManagerReferrals', 'ManagerStats', 'ManagerTeam'],
     }),
 
     // PUT /api/referrals/patient/:patientId
@@ -72,6 +93,15 @@ export const referralsApi = baseApi.injectEndpoints({
       invalidatesTags: ['Referrals'],
     }),
 
+    cancelReferralById: builder.mutation({
+      query: ({ referralId, cancellationReason }) => ({
+        url: `/referrals/${referralId}/cancel`,
+        method: 'POST',
+        body: { cancellationReason },
+      }),
+      invalidatesTags: ['Referrals', 'ManagerReferrals', 'ManagerStats'],
+    }),
+
     // DELETE /api/referrals/patient/:patientId
     deleteReferralsByPatientId: builder.mutation({
       query: (patientId) => ({
@@ -88,11 +118,15 @@ export const referralsApi = baseApi.injectEndpoints({
 export const {
   useGetReferralsQuery,
   useGetMyReferralsQuery,
+  useGetManagerDashboardQuery,
+  useGetManagerTeamQuery,
+  useGetManagerInsightsQuery,
   useGetReferralsByPatientIdQuery,
   useGetReferralsByPractitionerIdQuery,
   useGetReferralByIdQuery,
   useCreateReferralMutation,
   useUpdateReferralsByPatientIdMutation,
   useAssignReferralByIdMutation,
+  useCancelReferralByIdMutation,
   useDeleteReferralsByPatientIdMutation,
 } = referralsApi;

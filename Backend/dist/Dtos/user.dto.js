@@ -33,6 +33,7 @@ exports.createUserBodySchema = zod_1.z.object({
     clerkUserId: zod_1.z.string().trim().min(1, 'clerkUserId is required'),
 });
 exports.updateUserBodySchema = exports.createUserBodySchema
+    .omit({ clerkUserId: true, email: true })
     .partial()
     .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field is required for update',
