@@ -289,7 +289,11 @@ export const EmployeeOverview = () => {
 
   const now = new Date();
 
-  const upcomingAppointments = appointments.filter(
+  const visibleAppointments = appointments.filter(
+    (a) => (a?.status || "").toLowerCase() !== "cancelled"
+  );
+
+  const upcomingAppointments = visibleAppointments.filter(
     (a) => a.scheduledDate && new Date(a.scheduledDate) > now
   );
   const upcomingCount = upcomingAppointments.length;
@@ -310,7 +314,7 @@ export const EmployeeOverview = () => {
       : "None scheduled";
 
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const adviceSheetsCount = appointments.filter(
+  const adviceSheetsCount = visibleAppointments.filter(
     (a) =>
       a.scheduledDate &&
       new Date(a.scheduledDate) >= startOfMonth &&
@@ -501,7 +505,7 @@ export const EmployeeOverview = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {appointments.length === 0 ? (
+                {visibleAppointments.length === 0 ? (
                   <tr>
                     <td
                       colSpan="3"
@@ -511,7 +515,7 @@ export const EmployeeOverview = () => {
                     </td>
                   </tr>
                 ) : (
-                  appointments.map((app) => {
+                  visibleAppointments.map((app) => {
                     const doctor = app?.practitionerId
                       ? `${app.practitionerId.firstName || ""} ${
                           app.practitionerId.lastName || ""
