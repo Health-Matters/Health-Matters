@@ -12,6 +12,7 @@ import {
   Package,
   UserCheck,
   AlertCircle,
+  Download,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -185,6 +186,69 @@ export const AnalyticsKPI = () => {
     refetchUsers();
   };
 
+  const handleDownloadAnalyticsData = () => {
+    const now = new Date();
+
+    const sections = [
+      "Health Matters - Analytics and KPI Dashboard Export",
+      `Generated: ${now.toLocaleString()}`,
+      "",
+      "KPI SUMMARY",
+      `- Total Referrals: ${kpis.totalReferrals}`,
+      `- Pending Referrals: ${kpis.pendingReferrals}`,
+      `- Accepted Referrals: ${kpis.acceptedReferrals}`,
+      `- Rejected Referrals: ${kpis.rejectedReferrals}`,
+      `- Acceptance Rate: ${kpis.acceptanceRate}%`,
+      `- Total Users: ${kpis.totalUsers}`,
+      `- Active Users: ${kpis.activeUsers}`,
+      `- Practitioners: ${kpis.practitionerCount}`,
+      `- Managers: ${kpis.managerCount}`,
+      `- Employees: ${kpis.employeeCount}`,
+      `- Admins: ${kpis.adminCount}`,
+      `- Total Services: ${kpis.totalServices}`,
+      `- Active Services: ${kpis.activeServices}`,
+      `- Average Service Duration: ${kpis.avgServiceDuration} minutes`,
+      `- Recent Referrals (7 days): ${kpis.recentReferrals}`,
+      `- Monthly Growth: ${kpis.monthlyGrowth}%`,
+      "",
+      "REFERRAL STATUS DISTRIBUTION",
+      ...(referralStatusData.length > 0
+        ? referralStatusData.map((item) => `- ${item.name}: ${item.value}`)
+        : ["- No referral status data available"]),
+      "",
+      "USER ROLE DISTRIBUTION",
+      ...(userRoleData.length > 0
+        ? userRoleData.map((item) => `- ${item.role}: ${item.count}`)
+        : ["- No user role data available"]),
+      "",
+      "SERVICE CATEGORY DISTRIBUTION",
+      ...(serviceCategoryData.length > 0
+        ? serviceCategoryData.map((item) => `- ${item.name}: ${item.value}`)
+        : ["- No service category data available"]),
+      "",
+      "REFERRAL TREND (LAST 7 DAYS)",
+      ...(referralTrendData.length > 0
+        ? referralTrendData.map((item) => `- ${item.day}: ${item.referrals}`)
+        : ["- No referral trend data available"]),
+      "",
+      "End of export.",
+    ];
+
+    const content = sections.join("\n");
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const timestamp = now.toISOString().replace(/[:.]/g, "-");
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `analytics-kpi-export-${timestamp}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -208,13 +272,23 @@ export const AnalyticsKPI = () => {
             Monitor key performance indicators and system metrics
           </p>
         </div>
-        <Button
-          className="gap-2 border border-blue-700 bg-blue-600 text-white hover:bg-blue-700"
-          onClick={handleRefreshAll}
-        >
-          <RefreshCw className="h-4 w-4" />
-          Refresh All
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            className="gap-2 border border-blue-700 bg-blue-600 text-white hover:bg-blue-700"
+            onClick={handleRefreshAll}
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh All
+          </Button>
+          <Button
+            size="sm"
+            className="gap-2 border border-slate-300 bg-white text-slate-800 hover:bg-slate-100"
+            onClick={handleDownloadAnalyticsData}
+          >
+            <Download className="h-4 w-4" />
+            Download .txt
+          </Button>
+        </div>
       </div>
 
       {/* Top KPI Cards */}
