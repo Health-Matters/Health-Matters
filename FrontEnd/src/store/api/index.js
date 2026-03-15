@@ -15,6 +15,7 @@ export {
 export {
   useGetReferralsQuery,
   useGetMyReferralsQuery,
+  useGetMyPatientReferralsQuery,
   useGetReferralsByPatientIdQuery,
   useGetReferralsByPractitionerIdQuery,
   useGetReferralByIdQuery,

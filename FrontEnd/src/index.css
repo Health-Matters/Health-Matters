@@ -271,6 +271,31 @@ button:focus-visible {
 }
 
 @layer components {
+  .high-contrast,
+  .high-contrast body {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+  }
+
+  .high-contrast a {
+    color: #ffff00 !important;
+    text-decoration: underline;
+  }
+
+  .high-contrast button,
+  .high-contrast input,
+  .high-contrast select,
+  .high-contrast textarea,
+  .high-contrast [role="button"] {
+    border-color: #ffffff !important;
+    box-shadow: none !important;
+  }
+
+  .high-contrast *:focus-visible {
+    outline: 3px solid #ffff00 !important;
+    outline-offset: 2px;
+  }
+
   /* Dashboard-only dark mode consistency layer */
   .dark [data-dashboard] {
     color: rgb(226 232 240);

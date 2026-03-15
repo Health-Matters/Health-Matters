@@ -582,6 +582,22 @@ export const getMySubmittedReferrals = async (req: Request, res: Response, next:
   }
 };
 
+// EMP-REF-001: Get referrals where the authenticated user is the patient.
+// SECURITY: Identity is always derived from Clerk token, never from URL params.
+export const getMyPatientReferrals = async (req: Request, res: Response, next: NextFunction) => {
+	try {
+		const auth = getAuth(req);
+		if (!auth.userId) {
+			throw new UnauthorizedError('Authentication required');
+		}
+
+		const referrals = await Referral.find({ patientClerkUserId: auth.userId }).sort({ createdAt: -1 });
+		res.status(200).json(referrals);
+	} catch (error) {
+		next(error);
+	}
+};
+
 // MGR-006: Get a single referral by ID — hides confidential self-referrals from managers
 export const getReferralById = async (req: Request, res: Response, next: NextFunction) => {
   try {

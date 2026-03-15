@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUser } from "@clerk/clerk-react";
-import { useGetUsersQuery, useUpdateMeMutation } from "../../../store/api";
+import { useGetMeQuery, useUpdateMeMutation } from "../../../store/api";
 
 /*
  Team E - Employee personal details edit form and persistence flow (TME-002) . Done by Praneepa and Methmi
@@ -91,18 +91,9 @@ export const EmployeeProfileEdit = () => {
   const navigate = useNavigate();
   const { user: clerkUser } = useUser();
 
-  // Fetch current user by Clerk ID — same pattern as EmployeeProfile
-  const {
-    data: users,
-    isLoading,
-    isError,
-  } = useGetUsersQuery(
-    { clerkUserId: clerkUser?.id },
-    { skip: !clerkUser?.id }
-  );
-
-  // GET /api/users returns an array; grab the first (and only) match
-  const user = users?.[0];
+  const { data: user, isLoading, isError } = useGetMeQuery(undefined, {
+    skip: !clerkUser?.id,
+  });
 
   const [
     updateMe,

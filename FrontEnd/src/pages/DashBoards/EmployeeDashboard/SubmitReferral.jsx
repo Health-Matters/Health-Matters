@@ -41,7 +41,6 @@ export const SubmitReferral = () => {
     try {
       await createReferral({
         patientClerkUserId: user?.id,
-        submittedByClerkUserId: user?.id,
         serviceType,
         referralReason,
         notes: notes || undefined,

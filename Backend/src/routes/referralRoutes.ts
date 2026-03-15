@@ -6,6 +6,7 @@ import {
   deleteMySubmittedReferralById,
   deleteReferralByPatientId,
   getAllReferrals,
+  getMyPatientReferrals,
   getReferralById,
   getMySubmittedReferrals,
   getReferralsByPatientId,
@@ -27,6 +28,10 @@ ReferralRouter.get('/', getAllReferrals);
 // No manager ID in the URL — identity is read server-side from the token.
 // Optional query params: status, serviceType, search, dateFrom, dateTo, page, limit
 ReferralRouter.get('/my-submissions', getMySubmittedReferrals);
+
+// GET /api/referrals/my-patient-referrals
+// Returns referrals where the authenticated user is the patient.
+ReferralRouter.get('/my-patient-referrals', getMyPatientReferrals);
 
 // GET /api/referrals/patient/:patientId
 ReferralRouter.get('/patient/:patientId', getReferralsByPatientId);

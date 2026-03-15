@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { useGetReferralsByPatientIdQuery } from "../../../store/api/referralsApi";
+import { useGetMyPatientReferralsQuery } from "../../../store/api/referralsApi";
 import { useGetAppointmentsByEmployeeIdQuery } from "../../../store/api/appointmentsApi";
 
 import {
@@ -264,8 +264,8 @@ export const EmployeeOverview = () => {
     isLoading: referralsLoading,
     isError: referralsError,
     refetch: refetchReferrals,
-  } = useGetReferralsByPatientIdQuery(patientId, {
-    skip: !patientId,
+  } = useGetMyPatientReferralsQuery(undefined, {
+    skip: !user?.id,
     pollingInterval: 5000,
   });
 

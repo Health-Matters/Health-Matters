@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useUser } from "@clerk/clerk-react";
-import { useGetReferralsByPatientIdQuery } from "@/store/api/referralsApi";
+import { useGetMyPatientReferralsQuery } from "@/store/api/referralsApi";
 
 import {
   User,
@@ -21,7 +21,7 @@ export const HelpAndAdvice = () => {
   const { user } = useUser();
 
   const { data: referrals, isLoading, error } =
-    useGetReferralsByPatientIdQuery(user?.id, {
+    useGetMyPatientReferralsQuery(undefined, {
       skip: !user?.id,
     });
 

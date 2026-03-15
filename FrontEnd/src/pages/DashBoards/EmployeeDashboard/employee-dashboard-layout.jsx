@@ -3,11 +3,9 @@ import { Outlet, useLocation, Link } from "react-router";
 import {
   Home,
   ClipboardList,
-  BarChart3,
-  CalendarDays,
+  Bell,
   User,
   ChevronsUpDown,
-  LogOut,
   Settings,
 } from "lucide-react";
 import {
@@ -46,7 +44,7 @@ const items = [
   {
     title: "Notifications",
     url: "/employee/dashboard/notifications",
-    icon: CalendarDays,
+    icon: Bell,
   },
   {
     title: "Help & Advice",

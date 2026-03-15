@@ -55,6 +55,10 @@ const userSchema = new mongoose.Schema(
         email: { type: Boolean, default: true },
         sms: { type: Boolean, default: false },
       },
+      accessibility: {
+        highContrast: { type: Boolean, default: false },
+        fontSize: { type: Number, default: 14 },
+      },
     },
     clerkUserId: { type: String, unique: true, sparse: true, trim: true },
   },

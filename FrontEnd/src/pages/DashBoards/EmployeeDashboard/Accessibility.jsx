@@ -9,15 +9,15 @@
 //   );
 // };
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { setThemeMode } from "../../../store/themeSlice";
+import { useGetMeQuery, useUpdateMeMutation } from "../../../store/api";
 import { 
   Moon, 
   Sun, 
   Type, 
   Eye, 
-  Save,
   Monitor
 } from "lucide-react";
 
@@ -25,8 +25,54 @@ export const Accessibility = () => {
   const dispatch = useDispatch();
   const themeMode = useSelector((state) => state.theme.mode);
   const darkMode = themeMode === "dark";
+  const { data: me } = useGetMeQuery();
+  const [updateMe, { isLoading: isSaving }] = useUpdateMeMutation();
+  const hasInitialized = useRef(false);
+  const notificationsPreferencesRef = useRef({});
   const [highContrast, setHighContrast] = useState(false);
   const [fontSize, setFontSize] = useState(14);
+
+  useEffect(() => {
+    if (!me || hasInitialized.current) {
+      return;
+    }
+
+    const accessibility = me?.preferences?.accessibility;
+    notificationsPreferencesRef.current = me?.preferences?.notifications || {};
+    if (typeof accessibility?.highContrast === "boolean") {
+      setHighContrast(accessibility.highContrast);
+    }
+    if (typeof accessibility?.fontSize === "number") {
+      setFontSize(accessibility.fontSize);
+    }
+
+    hasInitialized.current = true;
+  }, [me]);
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${fontSize}px`;
+    document.documentElement.classList.toggle("high-contrast", highContrast);
+  }, [fontSize, highContrast]);
+
+  useEffect(() => {
+    if (!hasInitialized.current) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      updateMe({
+        preferences: {
+          notifications: notificationsPreferencesRef.current,
+          accessibility: {
+            highContrast,
+            fontSize,
+          },
+        },
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [highContrast, fontSize, updateMe]);
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
@@ -114,20 +160,20 @@ export const Accessibility = () => {
               max="20" 
               step="2"
               value={fontSize}
-              onChange={(e) => setFontSize(e.target.value)}
+              onChange={(e) => setFontSize(Number(e.target.value))}
               className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-emerald-600"
             />
           </div>
         </section>
 
-        {/* Save Bar */}
+        {/* Auto-save status */}
         <div className="flex items-center justify-between pt-6 border-t border-slate-100">
           <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
-            <Monitor size={14} /> Changes will be applied to this browser session.
+            <Monitor size={14} /> Preferences are applied instantly and saved to your account.
           </p>
-          <button className="flex items-center gap-2 px-8 py-3 bg-emerald-700 text-white rounded-xl font-bold hover:bg-emerald-800 shadow-lg shadow-emerald-100 transition-all active:scale-95">
-            <Save size={18} /> Save Changes
-          </button>
+          <p className="text-[11px] font-semibold text-slate-500">
+            {isSaving ? "Saving..." : "Saved"}
+          </p>
         </div>
       </div>
     </div>

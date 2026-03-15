@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useUser } from "@clerk/clerk-react";
-import { useGetUsersQuery } from "../../../store/api";
+import { useGetMeQuery } from "../../../store/api";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -25,7 +25,7 @@ const DisplayField = ({ label, value }) => (
     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 ml-1">
       {label}
     </p>
-    <div className="w-full bg-gray-50 rounded-2xl px-5 py-3.5 text-slate-700 font-semibold border border-transparent shadow-sm min-h-[48px] flex items-center overflow-hidden">
+    <div className="w-full bg-gray-50 rounded-2xl px-5 py-3.5 text-slate-700 font-semibold border border-transparent shadow-sm min-h-12 flex items-center overflow-hidden">
       <span className="truncate w-full">{displayValue(value)}</span>
     </div>
   </div>
@@ -62,19 +62,9 @@ export const EmployeeProfile = () => {
   const navigate = useNavigate();
   const { user: clerkUser } = useUser();
 
-  // Fetch the current user by their Clerk ID using the supported query param
-  const {
-    data: users,
-    isLoading,
-    isError,
-    error,
-  } = useGetUsersQuery(
-    { clerkUserId: clerkUser?.id },
-    { skip: !clerkUser?.id }   // don't fire until Clerk has resolved
-  );
-
-  // GET /api/users returns an array; grab the first (and only) match
-  const user = users?.[0];
+  const { data: user, isLoading, isError, error } = useGetMeQuery(undefined, {
+    skip: !clerkUser?.id,
+  });
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading || !clerkUser) {
@@ -90,8 +80,13 @@ export const EmployeeProfile = () => {
 
   // ── Derived values ────────────────────────────────────────────────────────
   const profile = user ?? {};
+  const firstName = profile.firstName || clerkUser?.firstName || "";
+  const lastName = profile.lastName || clerkUser?.lastName || "";
+  const email = profile.email || clerkUser?.primaryEmailAddress?.emailAddress || "";
+  const phone = profile.phone || clerkUser?.primaryPhoneNumber?.phoneNumber || "";
+  const department = profile.department || profile.role || "Employee";
   const fullName =
-    `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "—";
+    `${firstName} ${lastName}`.trim() || "—";
   const dob = profile.dateOfBirth
     ? new Date(profile.dateOfBirth).toLocaleDateString("en-GB", {
         day: "2-digit",
@@ -99,7 +94,7 @@ export const EmployeeProfile = () => {
         year: "numeric",
       })
     : "—";
-  const badgeLabel = profile.department || profile.role || "Employee";
+  const badgeLabel = department;
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-8 min-h-screen">
@@ -165,7 +160,7 @@ export const EmployeeProfile = () => {
             </div>
 
             {/* Name & Badge */}
-            <h2 className="mt-6 text-2xl font-bold text-slate-800 text-center truncate w-full text-center">
+            <h2 className="mt-6 w-full truncate text-center text-2xl font-bold text-slate-800">
               {fullName}
             </h2>
             <div className="mt-2 border border-gray-200 px-4 py-1 rounded-full text-[11px] font-bold text-gray-400 tracking-[0.2em] uppercase max-w-full overflow-hidden">
@@ -173,16 +168,16 @@ export const EmployeeProfile = () => {
             </div>
 
             {/* Quick info pills */}
-            {profile.email && (
+            {email && (
               <div className="mt-6 w-full bg-gray-50 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-slate-600 overflow-hidden">
                 <ShieldCheck size={16} className="text-[#064E3B] shrink-0" />
-                <span className="truncate font-medium">{profile.email}</span>
+                <span className="truncate font-medium">{email}</span>
               </div>
             )}
-            {profile.phone && (
+            {phone && (
               <div className="mt-2 w-full bg-gray-50 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm text-slate-600 overflow-hidden">
                 <Phone size={16} className="text-[#064E3B] shrink-0" />
-                <span className="truncate font-medium">{profile.phone}</span>
+                <span className="truncate font-medium">{phone}</span>
               </div>
             )}
             {profile.dateOfBirth && (
@@ -217,10 +212,10 @@ export const EmployeeProfile = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <DisplayField label="First Name" value={profile.firstName} />
-              <DisplayField label="Last Name" value={profile.lastName} />
+              <DisplayField label="First Name" value={firstName} />
+              <DisplayField label="Last Name" value={lastName} />
               <DisplayField label="Date of Birth" value={dob} />
-              <DisplayField label="Department" value={profile.department} />
+              <DisplayField label="Department" value={department} />
             </div>
           </section>
 
@@ -236,8 +231,8 @@ export const EmployeeProfile = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <DisplayField label="Email Address" value={profile.email} />
-              <DisplayField label="Phone Number" value={profile.phone} />
+              <DisplayField label="Email Address" value={email} />
+              <DisplayField label="Phone Number" value={phone} />
             </div>
 
             {/* Address sub-section */}

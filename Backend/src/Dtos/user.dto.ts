@@ -16,6 +16,12 @@ export const userPreferencesSchema = z.object({
       sms: z.boolean().optional(),
     })
     .optional(),
+  accessibility: z
+    .object({
+      highContrast: z.boolean().optional(),
+      fontSize: z.coerce.number().int().min(12).max(20).optional(),
+    })
+    .optional(),
 });
 
 export const createUserBodySchema = z.object({

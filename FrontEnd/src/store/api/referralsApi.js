@@ -21,6 +21,10 @@ export const referralsApi = baseApi.injectEndpoints({
       }),
       providesTags: ['Referrals'],
     }),
+    getMyPatientReferrals: builder.query({
+      query: () => '/referrals/my-patient-referrals',
+      providesTags: ['Referrals'],
+    }),
 
     // GET /api/referrals/patient/:patientId
     getReferralsByPatientId: builder.query({
@@ -102,6 +106,7 @@ export const referralsApi = baseApi.injectEndpoints({
 export const {
   useGetReferralsQuery,
   useGetMyReferralsQuery,
+  useGetMyPatientReferralsQuery,
   useGetReferralsByPatientIdQuery,
   useGetReferralsByPractitionerIdQuery,
   useGetReferralByIdQuery,
