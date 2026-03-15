@@ -54,7 +54,13 @@ export const PractitionerTestProfile = () => {
   }
 
   const profile = me ?? {};
-  const fullName = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() || "—";
+  const firstName = profile.firstName || clerkUser?.firstName || "";
+  const lastName = profile.lastName || clerkUser?.lastName || "";
+  const email = profile.email || clerkUser?.primaryEmailAddress?.emailAddress || "";
+  const phone = profile.phone || clerkUser?.primaryPhoneNumber?.phoneNumber || "";
+  const department = profile.department || "Practitioner";
+
+  const fullName = `${firstName} ${lastName}`.trim() || "—";
   const dateOfBirth = profile.dateOfBirth
     ? new Date(profile.dateOfBirth).toLocaleDateString("en-GB", {
         day: "2-digit",
@@ -88,20 +94,20 @@ export const PractitionerTestProfile = () => {
 
             <h2 className="mt-6 w-full truncate text-center text-2xl font-bold text-slate-800">{fullName}</h2>
             <div className="mt-2 max-w-full overflow-hidden rounded-full border border-gray-200 px-4 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-gray-400">
-              <span className="block truncate">{profile.department || "Practitioner"}</span>
+              <span className="block truncate">{department}</span>
             </div>
 
-            {profile.email && (
+            {email && (
               <div className="mt-6 flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-gray-50 px-4 py-3 text-sm text-slate-600">
                 <ShieldCheck size={16} className="shrink-0 text-blue-900" />
-                <span className="truncate font-medium">{profile.email}</span>
+                <span className="truncate font-medium">{email}</span>
               </div>
             )}
 
-            {profile.phone && (
+            {phone && (
               <div className="mt-2 flex w-full items-center gap-3 overflow-hidden rounded-2xl bg-gray-50 px-4 py-3 text-sm text-slate-600">
                 <Phone size={16} className="shrink-0 text-blue-900" />
-                <span className="truncate font-medium">{profile.phone}</span>
+                <span className="truncate font-medium">{phone}</span>
               </div>
             )}
 
@@ -124,10 +130,10 @@ export const PractitionerTestProfile = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <DisplayField label="First Name" value={profile.firstName} />
-              <DisplayField label="Last Name" value={profile.lastName} />
+              <DisplayField label="First Name" value={firstName} />
+              <DisplayField label="Last Name" value={lastName} />
               <DisplayField label="Date of Birth" value={dateOfBirth} />
-              <DisplayField label="Department" value={profile.department} />
+              <DisplayField label="Department" value={department} />
             </div>
           </section>
 
@@ -140,8 +146,8 @@ export const PractitionerTestProfile = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-              <DisplayField label="Email Address" value={profile.email} />
-              <DisplayField label="Phone Number" value={profile.phone} />
+              <DisplayField label="Email Address" value={email} />
+              <DisplayField label="Phone Number" value={phone} />
             </div>
 
             <div className="mt-6 border-t border-gray-100 pt-5">

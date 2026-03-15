@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useUser } from '@clerk/clerk-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import {
   useCancelAppointmentMutation,
   useGetAppointmentsByPractitionerIdQuery,
-  useGetUsersQuery,
   useRespondToAppointmentMutation,
 } from '@/store/api';
 
@@ -14,13 +12,14 @@ import {
  Team G - Practitioner appointment list, cancellation handling, and appointment statistics-related status views (TMG-001, TMG-003, TMG-004) . Done by Charin, Helika, and Vinuli
 */
 
-const getDisplayName = (user) => {
-  if (!user) {
+const formatClerkId = (value) => {
+  if (!value || typeof value !== 'string') {
     return 'Unknown';
   }
-
-  const name = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-  return name || user.userName || user.email || user.clerkUserId;
+  if (value.length <= 16) {
+    return value;
+  }
+  return `${value.slice(0, 6)}...${value.slice(-6)}`;
 };
 
 export const PractitionerAppointmentsLive = () => {
@@ -30,19 +29,8 @@ export const PractitionerAppointmentsLive = () => {
     isLoading,
     isError,
   } = useGetAppointmentsByPractitionerIdQuery(user?.id, { skip: !user?.id });
-  const { data: users = [] } = useGetUsersQuery();
   const [respondToAppointment, { isLoading: isResponding }] = useRespondToAppointmentMutation();
   const [cancelAppointment, { isLoading: isCancelling }] = useCancelAppointmentMutation();
-
-  const usersByClerkId = useMemo(() => {
-    const map = new Map();
-    users.forEach((entry) => {
-      if (entry.clerkUserId) {
-        map.set(entry.clerkUserId, entry);
-      }
-    });
-    return map;
-  }, [users]);
 
   const assignedAppointments = appointments.filter((appointment) => appointment.status === 'assigned');
   const confirmedAppointments = appointments.filter((appointment) => appointment.status === 'confirmed');
@@ -92,7 +80,6 @@ export const PractitionerAppointmentsLive = () => {
           title="Awaiting your response"
           description="Assigned by admin and waiting for your acceptance."
           appointments={assignedAppointments}
-          usersByClerkId={usersByClerkId}
           isResponding={isResponding || isCancelling}
           onRespond={handleResponse}
           onAccept={handleAcceptAssignedAppointment}
@@ -104,7 +91,6 @@ export const PractitionerAppointmentsLive = () => {
           title="Confirmed appointments"
           description="Appointments already accepted by you. Cancel if plans change."
           appointments={confirmedAppointments}
-          usersByClerkId={usersByClerkId}
           isResponding={isResponding || isCancelling}
           onRespond={handleResponse}
           onCancel={handleCancel}
@@ -114,7 +100,6 @@ export const PractitionerAppointmentsLive = () => {
           title="Cancelled appointments"
           description="History of appointments you or the patient cancelled."
           appointments={cancelledAppointments}
-          usersByClerkId={usersByClerkId}
           isResponding={isResponding || isCancelling}
           onRespond={handleResponse}
         />
@@ -127,7 +112,6 @@ const AppointmentSection = ({
   title,
   description,
   appointments,
-  usersByClerkId,
   isResponding,
   onRespond,
   onAccept,
@@ -147,16 +131,13 @@ const AppointmentSection = ({
         </div>
       ) : (
         appointments.map((appointment) => {
-          const patient = usersByClerkId.get(appointment.patientClerkUserId);
-          const assignedBy = usersByClerkId.get(appointment.assignedByClerkUserId);
-
           return (
             <div key={appointment._id} className="rounded-xl border border-slate-200 p-4 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900">{appointment.serviceType || 'Appointment'}</h3>
                   <p className="text-sm text-slate-600">
-                    Patient: {patient ? getDisplayName(patient) : appointment.patientClerkUserId}
+                    Patient ID: {formatClerkId(appointment.patientClerkUserId)}
                   </p>
                 </div>
                 <Badge className={
@@ -179,7 +160,7 @@ const AppointmentSection = ({
                   <dt className="font-medium text-slate-900">Assignment source</dt>
                   <dd>
                     {appointment.assignmentSource === 'admin'
-                      ? `Assigned by ${assignedBy ? getDisplayName(assignedBy) : 'admin'}`
+                      ? `Assigned by ${formatClerkId(appointment.assignedByClerkUserId)}`
                       : 'Claimed from referral queue'}
                   </dd>
                 </div>

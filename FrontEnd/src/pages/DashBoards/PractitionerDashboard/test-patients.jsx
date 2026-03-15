@@ -42,6 +42,40 @@ export const PractitionerTestPatients = () => {
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPatients = patients.length;
+  const activePatients = patients.filter((patient) => patient.status === "Active").length;
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const newPatients = patients.filter((patient) => {
+    const parsed = new Date(patient.lastVisit);
+    return !Number.isNaN(parsed.getTime()) && parsed >= thirtyDaysAgo;
+  }).length;
+
+  const handleReport = (patient) => {
+    const reportText = [
+      "Health Matters Patient Report",
+      `Patient ID: ${patient.id}`,
+      `Patient Name: ${patient.name}`,
+      `Age: ${patient.age}`,
+      `Condition: ${patient.condition}`,
+      `Status: ${patient.status}`,
+      `Last Visit: ${patient.lastVisit}`,
+      `Medical History: ${patient.history}`,
+      `Appointment: ${patient.appointment}`,
+      `Treatment Notes: ${patient.notes}`,
+    ].join("\n");
+
+    const blob = new Blob([reportText], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${patient.id}-report.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
 
@@ -57,17 +91,17 @@ export const PractitionerTestPatients = () => {
 
         <div className="bg-white p-4 shadow rounded">
           <p className="text-gray-500 text-sm">Total Patients</p>
-          <p className="text-2xl font-bold">120</p>
+          <p className="text-2xl font-bold">{totalPatients}</p>
         </div>
 
         <div className="bg-white p-4 shadow rounded">
           <p className="text-gray-500 text-sm">Active Patients</p>
-          <p className="text-2xl font-bold">90</p>
+          <p className="text-2xl font-bold">{activePatients}</p>
         </div>
 
         <div className="bg-white p-4 shadow rounded">
           <p className="text-gray-500 text-sm">New Patients</p>
-          <p className="text-2xl font-bold">15</p>
+          <p className="text-2xl font-bold">{newPatients}</p>
         </div>
 
       </div>
@@ -120,7 +154,10 @@ export const PractitionerTestPatients = () => {
                     View
                   </button>
 
-                  <button className="bg-green-500 text-white px-3 py-1 rounded">
+                  <button
+                    className="bg-green-500 text-white px-3 py-1 rounded"
+                    onClick={() => handleReport(p)}
+                  >
                     Report
                   </button>
 
@@ -148,7 +185,7 @@ export const PractitionerTestPatients = () => {
 
         <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
 
-          <div className="bg-white p-6 rounded-lg w-[500px] shadow-lg">
+          <div className="bg-white p-6 rounded-lg w-125 shadow-lg">
 
             <div className="flex justify-between items-center mb-4">
 

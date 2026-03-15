@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 const dummyReferrals = [
   {
@@ -45,17 +45,38 @@ const dummyReferrals = [
 
 export const PractitionerTestOverview = () => {
   const [search, setSearch] = useState("");
+  const [referrals, setReferrals] = useState(dummyReferrals);
 
-  const filtered = dummyReferrals.filter(
+  const filtered = referrals.filter(
     (r) =>
       r.patient.toLowerCase().includes(search.toLowerCase()) ||
       r.id.toLowerCase().includes(search.toLowerCase())
   );
 
-  const summary = {
-    pending: dummyReferrals.filter((r) => r.status === "Pending").length,
-    assigned: dummyReferrals.filter((r) => r.status === "Assigned").length,
-    accepted: dummyReferrals.filter((r) => r.status === "Accepted").length,
+  const summary = useMemo(
+    () => ({
+      pending: referrals.filter((r) => r.status === "Pending").length,
+      rejected: referrals.filter((r) => r.status === "Rejected").length,
+      accepted: referrals.filter((r) => r.status === "Accepted").length,
+    }),
+    [referrals]
+  );
+
+  const updateStatus = (id, status) => {
+    setReferrals((current) =>
+      current.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              status,
+              assignedTo:
+                status === "Accepted"
+                  ? item.assignedTo || "Dr. Sarah Mitchell"
+                  : item.assignedTo,
+            }
+          : item
+      )
+    );
   };
 
   return (
@@ -71,8 +92,8 @@ export const PractitionerTestOverview = () => {
           <p className="text-2xl font-bold text-yellow-900">{summary.pending}</p>
         </div>
         <div className="rounded-lg bg-blue-100 p-4 shadow">
-          <h3 className="text-sm font-medium text-blue-800">Assigned Referrals</h3>
-          <p className="text-2xl font-bold text-blue-900">{summary.assigned}</p>
+          <h3 className="text-sm font-medium text-blue-800">Rejected Referrals</h3>
+          <p className="text-2xl font-bold text-blue-900">{summary.rejected}</p>
         </div>
         <div className="rounded-lg bg-green-100 p-4 shadow">
           <h3 className="text-sm font-medium text-green-800">Accepted Referrals</h3>
@@ -102,6 +123,7 @@ export const PractitionerTestOverview = () => {
               <th className="px-4 py-2 text-left font-medium text-gray-700">Service Type</th>
               <th className="px-4 py-2 text-left font-medium text-gray-700">Status</th>
               <th className="px-4 py-2 text-left font-medium text-gray-700">Assigned To</th>
+              <th className="px-4 py-2 text-left font-medium text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -113,6 +135,28 @@ export const PractitionerTestOverview = () => {
                 <td className="px-4 py-2">{r.service}</td>
                 <td className="px-4 py-2">{r.status}</td>
                 <td className="px-4 py-2">{r.assignedTo || "-"}</td>
+                <td className="px-4 py-2">
+                  {r.status === "Pending" ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updateStatus(r.id, "Accepted")}
+                        className="rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-emerald-700"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateStatus(r.id, "Rejected")}
+                        className="rounded-md bg-rose-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-rose-700"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-gray-500">No actions</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -120,7 +164,7 @@ export const PractitionerTestOverview = () => {
 
         {/* Footer */}
         <div className="px-4 py-2 text-sm text-gray-600">
-          Showing {filtered.length} of {dummyReferrals.length} referrals
+          Showing {filtered.length} of {referrals.length} referrals
         </div>
       </div>
     </div>

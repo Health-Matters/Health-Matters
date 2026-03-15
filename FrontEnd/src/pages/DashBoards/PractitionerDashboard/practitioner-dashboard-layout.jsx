@@ -1,7 +1,7 @@
 //practtioner-dashboard-layout.jsx
 
 import React from "react";
-import { Outlet, useLocation } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import {
   Home,
   Stethoscope,
@@ -70,8 +70,8 @@ const PractitionerDashboardLayout = () => {
     <TooltipProvider>
       <SidebarProvider>
         <div data-dashboard="practitioner" className="flex min-h-screen w-full bg-blue-50 dark:bg-linear-to-br dark:from-slate-950 dark:via-blue-950/25 dark:to-slate-950 dark:text-slate-100">
-          <Sidebar className="border-r border-blue-800 bg-blue-800 text-white dark:border-blue-900 dark:bg-slate-950">
-            <SidebarHeader className="flex h-16 items-center border-b border-blue-800 px-6 dark:border-blue-900">
+          <Sidebar className="border-r border-slate-800 bg-slate-900 text-slate-100 dark:border-slate-700 dark:bg-slate-950">
+            <SidebarHeader className="flex h-16 items-center border-b border-slate-800 px-6 dark:border-slate-700">
               <div className="flex w-full items-center gap-3">
                 <img
                   src={logoTrans}
@@ -100,15 +100,15 @@ const PractitionerDashboardLayout = () => {
                               mb-1 h-10 w-full rounded-md px-3 transition-colors
                               ${
                                 isActive
-                                  ? "bg-blue-100 text-black"
-                                  : "text-blue-100 hover:bg-blue-200 hover:text-white"
+                                  ? "bg-blue-100 text-slate-900"
+                                  : "text-slate-100 hover:bg-slate-800 hover:text-white"
                               }
                             `}
                           >
-                            <a href={item.url} className="flex items-center gap-3">
+                            <Link to={item.url} className="flex items-center gap-3">
                               <item.icon className="h-5 w-5" />
                               <span className="font-medium">{item.title}</span>
-                            </a>
+                            </Link>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
                       );
@@ -118,8 +118,8 @@ const PractitionerDashboardLayout = () => {
               </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-amber-800 p-4 dark:border-blue-900">
-              <div className="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-amber-800 dark:hover:bg-slate-900">
+            <SidebarFooter className="border-t border-slate-800 p-4 dark:border-slate-700">
+              <div className="flex items-center justify-between gap-2 rounded-md p-2 hover:bg-slate-800 dark:hover:bg-slate-900">
                 <div className="flex items-center gap-3">
                   <UserButton
                     appearance={{
@@ -130,10 +130,10 @@ const PractitionerDashboardLayout = () => {
                     <span className="font-medium">
                       {user?.firstName || "User"}
                     </span>
-                    <span className="text-xs text-amber-200">Practitioner</span>
+                    <span className="text-xs text-slate-300">Practitioner</span>
                   </div>
                 </div>
-                <ChevronsUpDown className="h-4 w-4 text-amber-200" />
+                <ChevronsUpDown className="h-4 w-4 text-slate-300" />
               </div>
             </SidebarFooter>
           </Sidebar>

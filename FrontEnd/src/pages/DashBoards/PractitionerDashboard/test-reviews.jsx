@@ -57,6 +57,23 @@ export const PractitionerTestReviews = () => {
   const { data: reviews = [], isLoading, isFetching } = useGetReviewsQuery({ limit });
   const [createReview, { isLoading: isSubmitting }] = useCreateReviewMutation();
 
+  const knownPatientNames = useMemo(() => {
+    const seededNames = [
+      "John Smith",
+      "Sarah Lee",
+      "Emma Johnson",
+      "Michael Brown",
+      "Sarah Davis",
+      "Robert Wilson",
+      "Jane Smith",
+      "Alex Johnson",
+    ];
+    const fromReviews = reviews
+      .map((review) => review?.patientName)
+      .filter((name) => typeof name === "string" && name.trim().length > 0);
+    return [...new Set([...seededNames, ...fromReviews].map((name) => name.trim().toLowerCase()))];
+  }, [reviews]);
+
   const reviewCountLabel = useMemo(() => {
     if (showAll) return `${reviews.length} total reviews`;
     return `Showing ${reviews.length} recent reviews`;
@@ -72,6 +89,11 @@ export const PractitionerTestReviews = () => {
 
     if (!form.patientName.trim() || !form.message.trim() || form.rating < 1) {
       setFormError("Patient name, review message, and a star rating are required.");
+      return;
+    }
+
+    if (!knownPatientNames.includes(form.patientName.trim().toLowerCase())) {
+      setFormError("Patient name not found. Please enter an existing patient name.");
       return;
     }
 

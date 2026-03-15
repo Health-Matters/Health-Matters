@@ -6,19 +6,34 @@ import { useState } from "react";
 
 export const PractitionerTestCreateReferral = () => {
 
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     patientId: "",
     practitionerId: "",
     referralReason: "",
     serviceType: ""
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormData);
 
   const [errors, setErrors] = useState({});
 
-  // Placeholder arrays (API will fill later)
-  const patients = [];
-  const practitioners = [];
-  const serviceTypes = [];
+  const patients = [
+    { id: "P001", name: "John Smith" },
+    { id: "P002", name: "Sarah Lee" },
+    { id: "P003", name: "Emma Johnson" },
+  ];
+
+  const practitioners = [
+    { id: "PR001", name: "Dr. Sarah Mitchell" },
+    { id: "PR002", name: "Dr. James Wilson" },
+    { id: "PR003", name: "Dr. Emily Chen" },
+  ];
+
+  const serviceTypes = [
+    { id: "physio", name: "Physiotherapy" },
+    { id: "ot", name: "Occupational Therapy" },
+    { id: "psych", name: "Psychology" },
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,6 +72,11 @@ export const PractitionerTestCreateReferral = () => {
     }
 
     console.log(formData);
+  };
+
+  const handleCancel = () => {
+    setFormData(initialFormData);
+    setErrors({});
   };
 
   return (
@@ -186,6 +206,7 @@ export const PractitionerTestCreateReferral = () => {
           <button
             type="button"
             className="border px-5 py-2 rounded-lg text-gray-600"
+            onClick={handleCancel}
           >
             Cancel
           </button>
