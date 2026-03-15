@@ -1,6 +1,19 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const baseUrl = import.meta.env.VITE_API_BASE_URL;
+const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL;
+const shouldUseRelativeApi =
+  typeof window !== 'undefined' &&
+  window.location.port === '3000' &&
+  typeof configuredBaseUrl === 'string' &&
+  configuredBaseUrl.includes('localhost:3000');
+
+const baseUrl = (
+  shouldUseRelativeApi
+    ? '/api'
+    : configuredBaseUrl && configuredBaseUrl.trim()
+      ? configuredBaseUrl
+      : '/api'
+).replace(/\/$/, '');
 
 console.log('RTK Query baseUrl:', baseUrl);
 
