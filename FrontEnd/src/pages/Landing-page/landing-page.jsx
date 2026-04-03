@@ -74,7 +74,7 @@ export const Landing = () => {
               <SignedOut>
                 <div className="flex flex-col sm:flex-row gap-4 items-center">
                   <Link to="/sign-in">
-                    <Button className="h-14 px-10 text-lg rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-0 shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:bg-cyan-400 hover:scale-105 transition-all duration-300 font-semibold">
+                    <Button className="h-14 px-10 text-lg rounded-2xl bg-linear-to-r from-cyan-500 to-blue-600 text-white border-0 shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:bg-cyan-400 hover:scale-105 transition-all duration-300 font-semibold">
                       Get Started <ArrowRight className="ml-2 w-5 h-5" />
                     </Button>
                   </Link>
@@ -103,7 +103,7 @@ export const Landing = () => {
             <div
               key={idx}
               // FIX: Used backticks for long string & ensuring class names are safe
-              className={`group backdrop-blur-xl bg-white/[0.03] border border-white/10 rounded-2xl p-8 flex flex-col justify-between items-start space-y-4 hover:bg-white/[0.07] hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all duration-300`}
+              className={`group backdrop-blur-xl bg-white/3 border border-white/10 rounded-2xl p-8 flex flex-col justify-between items-start space-y-4 hover:bg-white/[0.07] hover:border-cyan-500/50 hover:shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all duration-300`}
             >
               <div className="p-3 rounded-xl bg-cyan-500/10 group-hover:bg-cyan-500/20 transition-colors">
                 <feature.icon
@@ -112,7 +112,7 @@ export const Landing = () => {
                 />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-white group-hover:text-cyan-200 transition-colors">
+                <h3 className="text-xl font-semibold text-slate-100 group-hover:text-cyan-100 transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-base text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors">
